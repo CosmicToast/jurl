@@ -1,0 +1,332 @@
+#include "jurl.h"
+
+enum jurl_paramtype {
+	JURL_PARAMTYPE_BOOLEAN,
+	JURL_PARAMTYPE_STRING,
+	JURL_PARAMTYPE_BITMASK,
+	JURL_PARAMTYPE_SLIST,
+	JURL_PARAMTYPE_FILE,
+	JURL_PARAMTYPE_LONG,
+	JURL_PARAMTYPE_ENUM,
+	JURL_PARAMTYPE_OFF_T,
+};
+struct jurl_opt {
+	CURLoption opt;
+	const char *keyword;
+	enum jurl_paramtype type;
+};
+
+static const struct jurl_opt jurl_opts[] = {
+	// * behavior options
+	{CURLOPT_VERBOSE,       "verbose",       JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_HEADER,        "header",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_NOPROGRESS,    "noprogress",    JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_NOSIGNAL,      "nosignal",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_WILDCARDMATCH, "wildcardmatch", JURL_PARAMTYPE_BOOLEAN},
+
+	// SKIP: * callback options, not really feasible
+
+	// * error options
+	// SKIP: errorbuffer: complex
+	{CURLOPT_STDERR,                "stderr",                JURL_PARAMTYPE_FILE},
+	{CURLOPT_FAILONERROR,           "failonerror",           JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_KEEP_SENDING_ON_ERROR, "keep-sending-on-error", JURL_PARAMTYPE_BOOLEAN},
+
+	// * network options
+	{CURLOPT_URL,                  "url",                  JURL_PARAMTYPE_STRING},
+	{CURLOPT_PATH_AS_IS,           "path-as-is",           JURL_PARAMTYPE_STRING},
+	// SKIP: protocols: deprecated for protocols-str
+	{CURLOPT_PROTOCOLS_STR,        "protocols",            JURL_PARAMTYPE_STRING},
+	// SKIP: redir-protocols: deprecated for redir-protocols-str
+	{CURLOPT_REDIR_PROTOCOLS,      "redir-protocols",      JURL_PARAMTYPE_STRING},
+	{CURLOPT_DEFAULT_PROTOCOL,     "default-protocol",     JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY,                "proxy",                JURL_PARAMTYPE_STRING},
+	{CURLOPT_PRE_PROXY,            "pre-proxy",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXYPORT,            "proxyport",            JURL_PARAMTYPE_LONG},
+	{CURLOPT_PROXYTYPE,            "proxytype",            JURL_PARAMTYPE_ENUM},
+	{CURLOPT_NOPROXY,              "noproxy",              JURL_PARAMTYPE_STRING},
+	{CURLOPT_HTTPPROXYTUNNEL,      "httpproxytunnel",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_CONNECT_TO,           "connect-to",           JURL_PARAMTYPE_SLIST},
+	{CURLOPT_SOCKS5_AUTH,          "socks5-auth",          JURL_PARAMTYPE_BITMASK},
+	// SKIP: socks5-gssapi-service: deprecated for service-name
+	{CURLOPT_SOCKS5_GSSAPI_NEC,    "socsk5-gssapi-nec",    JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_PROXY_SERVICE_NAME,   "proxy-service-name",   JURL_PARAMTYPE_STRING},
+	{CURLOPT_HAPROXYPROTOCOL,      "haproxyprotocol",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SERVICE_NAME,         "service-name",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_INTERFACE,            "interface",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_LOCALPORT,            "localport",            JURL_PARAMTYPE_LONG},
+	{CURLOPT_LOCALPORTRANGE,       "localportrange",       JURL_PARAMTYPE_LONG},
+	{CURLOPT_DNS_CACHE_TIMEOUT,    "dns-cache-timeout",    JURL_PARAMTYPE_LONG},
+	// SKIP: dns-use-global-cache: deprecated in favor of using a share interface
+	{CURLOPT_DOH_URL,              "doh-url",              JURL_PARAMTYPE_STRING},
+	{CURLOPT_BUFFERSIZE,           "buffersize",           JURL_PARAMTYPE_LONG},
+	{CURLOPT_PORT,                 "port",                 JURL_PARAMTYPE_LONG},
+	{CURLOPT_TCP_FASTOPEN,         "tcp-fastopen",         JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_TCP_NODELAY,          "tcp-nodelay",          JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_ADDRESS_SCOPE,        "address-scope",        JURL_PARAMTYPE_LONG},
+	{CURLOPT_TCP_KEEPALIVE,        "tcp-keepalive",        JURL_PARAMTYPE_LONG},
+	{CURLOPT_TCP_KEEPIDLE,         "tcp-keepidle",         JURL_PARAMTYPE_LONG},
+	{CURLOPT_TCP_KEEPINTVL,        "tcp-keepintvl",        JURL_PARAMTYPE_LONG},
+	{CURLOPT_UNIX_SOCKET_PATH,     "unix-socket-path",     JURL_PARAMTYPE_STRING},
+	{CURLOPT_ABSTRACT_UNIX_SOCKET, "abstract-unix-socket", JURL_PARAMTYPE_STRING},
+
+	// * names and passwords options
+	{CURLOPT_NETRC,                    "netrc",                    JURL_PARAMTYPE_ENUM},
+	{CURLOPT_NETRC_FILE,               "netrc-file",               JURL_PARAMTYPE_STRING},
+	{CURLOPT_USERPWD,                  "userpwd",                  JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXYUSERPWD,             "proxyuserpwd",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_USERNAME,                 "username",                 JURL_PARAMTYPE_STRING},
+	{CURLOPT_PASSWORD,                 "password",                 JURL_PARAMTYPE_STRING},
+	{CURLOPT_LOGIN_OPTIONS,            "login-options",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXYUSERNAME,            "proxyusername",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXYPASSWORD,            "proxypassword",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_HTTPAUTH,                 "httpauth",                 JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_TLSAUTH_USERNAME,         "tlsauth-username",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_TLSAUTH_USERNAME,   "proxy-tlsauth-username",   JURL_PARAMTYPE_STRING},
+	{CURLOPT_TLSAUTH_PASSWORD,         "tlsauth-password",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_TLSAUTH_PASSWORD,   "proxy-tlsauth-password",   JURL_PARAMTYPE_STRING},
+	{CURLOPT_TLSAUTH_TYPE,             "tlsauth-type",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_TLSAUTH_TYPE,       "proxy-tlsauth-type",       JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXYAUTH,                "proxyauth",                JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_SASL_AUTHZID,             "sasl-authzid",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_SASL_IR,                  "sasl-ir",                  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_XOAUTH2_BEARER,           "xoauth2-bearer",           JURL_PARAMTYPE_STRING},
+	{CURLOPT_DISALLOW_USERNAME_IN_URL, "disallow-username-in-url", JURL_PARAMTYPE_BOOLEAN},
+
+	// * http options
+	{CURLOPT_AUTOREFERER,            "autoreferer",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_ACCEPT_ENCODING,        "accept-encoding",        JURL_PARAMTYPE_STRING},
+	{CURLOPT_TRANSFER_ENCODING,      "transfer-encoding",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FOLLOWLOCATION,         "followlocation",         JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_UNRESTRICTED_AUTH,      "unrestricted-auth",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_MAXREDIRS,              "maxredirs",              JURL_PARAMTYPE_LONG},
+	{CURLOPT_POSTREDIR,              "postredir",              JURL_PARAMTYPE_BITMASK},
+	// SKIP: put: deprecated for upload
+	{CURLOPT_POST,                   "post",                   JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_POSTFIELDS,             "postfields",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_POSTFIELDSIZE,          "postfieldsize",          JURL_PARAMTYPE_LONG},
+	{CURLOPT_POSTFIELDSIZE_LARGE,    "postfieldsize-large",    JURL_PARAMTYPE_OFF_T},
+	{CURLOPT_COPYPOSTFIELDS,         "copypostfields",         JURL_PARAMTYPE_STRING},
+	// SKIP: httppost: deprecated for mimepost
+	{CURLOPT_REFERER,                "referer",                JURL_PARAMTYPE_STRING},
+	{CURLOPT_USERAGENT,              "useragent",              JURL_PARAMTYPE_STRING},
+	{CURLOPT_HTTPHEADER,             "httpheader",             JURL_PARAMTYPE_SLIST},
+	{CURLOPT_HEADEROPT,              "headeropt",              JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_PROXYHEADER,            "proxyheader",            JURL_PARAMTYPE_SLIST},
+	{CURLOPT_HTTP200ALIASES,         "http200aliases",         JURL_PARAMTYPE_SLIST},
+	{CURLOPT_COOKIE,                 "cookie",                 JURL_PARAMTYPE_STRING},
+	{CURLOPT_COOKIEFILE,             "cookiefile",             JURL_PARAMTYPE_FILE},
+	{CURLOPT_COOKIEJAR,              "cookiejar",              JURL_PARAMTYPE_FILE},
+	{CURLOPT_COOKIESESSION,          "cookiesession",          JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_COOKIELIST,             "cookielist",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_ALTSVC,                 "altsvc",                 JURL_PARAMTYPE_STRING},
+	{CURLOPT_ALTSVC_CTRL,            "altsvc-ctrl",            JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_HSTS,                   "hsts",                   JURL_PARAMTYPE_STRING},
+	{CURLOPT_HSTS_CTRL,              "hsts-ctrl",              JURL_PARAMTYPE_BITMASK},
+	// SKIP: hstsreadfunction: callback
+	// SKIP: hstsreaddata: callback
+	// SKIP: hstswritefunction: callback
+	// SKIP: hstswritedata: callback
+	{CURLOPT_HTTPGET,                "httpget",                JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_REQUEST_TARGET,         "request-target",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_HTTP_VERSION,           "http-version",           JURL_PARAMTYPE_ENUM},
+	{CURLOPT_HTTP09_ALLOWED,         "http09-allowed",         JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_IGNORE_CONTENT_LENGTH,  "ignore-content-length",  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_HTTP_CONTENT_DECODING,  "http-content-decoding",  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_HTTP_TRANSFER_DECODING, "http-transfer-decoding", JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_EXPECT_100_TIMEOUT_MS,  "expect-100-timeout-ms",  JURL_PARAMTYPE_LONG},
+	// SKIP: trailerfunction: callback
+	// SKIP: trailerdata: callback
+	{CURLOPT_PIPEWAIT,               "pipewait",               JURL_PARAMTYPE_BOOLEAN},
+	// SKIP: stream-depends: not implementing this weird thing
+	// SKIP: stream-depends-e: ditto
+	{CURLOPT_STREAM_WEIGHT,          "stream-weight",          JURL_PARAMTYPE_LONG},
+
+	// * smtp options
+	{CURLOPT_MAIL_FROM,             "mail-from",            JURL_PARAMTYPE_STRING},
+	{CURLOPT_MAIL_RCPT,             "mail-rcpt",            JURL_PARAMTYPE_SLIST},
+	{CURLOPT_MAIL_AUTH,             "mail-auth",            JURL_PARAMTYPE_STRING},
+	// curl has a typo here. I remove the typo from the keyword
+	{CURLOPT_MAIL_RCPT_ALLLOWFAILS, "mail-rcpt-allowfails", JURL_PARAMTYPE_BOOLEAN},
+
+	// * tftp options
+	{CURLOPT_TFTP_BLKSIZE,    "tftp-blksize",    JURL_PARAMTYPE_LONG},
+	{CURLOPT_TFTP_NO_OPTIONS, "tftp-no-options", JURL_PARAMTYPE_BOOLEAN},
+
+	// * ftp options
+	{CURLOPT_FTPPORT,                 "ftpport",                 JURL_PARAMTYPE_STRING},
+	{CURLOPT_QUOTE,                   "quote",                   JURL_PARAMTYPE_SLIST},
+	{CURLOPT_POSTQUOTE,               "postquote",               JURL_PARAMTYPE_SLIST},
+	{CURLOPT_PREQUOTE,                "prequote",                JURL_PARAMTYPE_SLIST},
+	{CURLOPT_APPEND,                  "append",                  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FTP_USE_EPRT,            "ftp-use-eprt",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FTP_USE_EPSV,            "ftp-use-epsv",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FTP_USE_PRET,            "ftp-use-pret",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FTP_CREATE_MISSING_DIRS, "ftp-create-missing-dirs", JURL_PARAMTYPE_ENUM},
+	{CURLOPT_SERVER_RESPONSE_TIMEOUT, "server-response-timeout", JURL_PARAMTYPE_LONG},
+	{CURLOPT_FTP_ALTERNATIVE_TO_USER, "ftp-alternative-to-user", JURL_PARAMTYPE_STRING},
+	{CURLOPT_FTP_SKIP_PASV_IP,        "ftp-skip-pasv-ip",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FTPSSLAUTH,              "ftpsslauth",              JURL_PARAMTYPE_ENUM},
+	{CURLOPT_FTP_SSL_CCC,             "ftp-ssl-ccc",             JURL_PARAMTYPE_ENUM},
+	{CURLOPT_FTP_ACCOUNT,             "ftp-account",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_FTP_FILEMETHOD,          "ftp-filemethod",          JURL_PARAMTYPE_ENUM},
+
+	// * rtsp options
+	{CURLOPT_RTSP_REQUEST,     "rtsp-request",     JURL_PARAMTYPE_ENUM},
+	{CURLOPT_RTSP_SESSION_ID,  "rtsp-session-id",  JURL_PARAMTYPE_STRING},
+	{CURLOPT_RTSP_STREAM_URI,  "rtsp-stream-uri",  JURL_PARAMTYPE_STRING},
+	{CURLOPT_RTSP_TRANSPORT,   "rtsp-transport",   JURL_PARAMTYPE_STRING},
+	{CURLOPT_RTSP_CLIENT_CSEQ, "rtsp-client-cseq", JURL_PARAMTYPE_LONG},
+	{CURLOPT_RTSP_SERVER_CSEQ, "rtsp-server-cseq", JURL_PARAMTYPE_LONG},
+	{CURLOPT_AWS_SIGV4,        "aws-sigv4",        JURL_PARAMTYPE_STRING},
+
+	// * protocol options
+	{CURLOPT_TRANSFERTEXT,        "transfertext",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_PROXY_TRANSFER_MODE, "proxy-transfer-mode", JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_CRLF,                "crlf",                JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_RANGE,               "range",               JURL_PARAMTYPE_STRING},
+	{CURLOPT_RESUME_FROM,         "resume-from",         JURL_PARAMTYPE_LONG},
+	{CURLOPT_RESUME_FROM_LARGE,   "resume-from-large",   JURL_PARAMTYPE_OFF_T},
+	// SKIP: curlu: not implementing CURLU*
+	{CURLOPT_CUSTOMREQUEST,       "customrequest",       JURL_PARAMTYPE_STRING},
+	{CURLOPT_FILETIME,            "filetime",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_DIRLISTONLY,         "dirlistonly",         JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_NOBODY,              "nobody",              JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_INFILESIZE,          "infilesize",          JURL_PARAMTYPE_LONG},
+	{CURLOPT_INFILESIZE_LARGE,    "infilesize-large",    JURL_PARAMTYPE_OFF_T},
+	{CURLOPT_UPLOAD,              "upload",              JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_UPLOAD_BUFFERSIZE,   "upload-buffersize",   JURL_PARAMTYPE_LONG},
+	// TODO: mimepost
+	{CURLOPT_MIME_OPTIONS,        "mime-options",        JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_MAXFILESIZE,         "maxfilesize",         JURL_PARAMTYPE_LONG},
+	{CURLOPT_MAXFILESIZE_LARGE,   "maxfilesize-large",   JURL_PARAMTYPE_OFF_T},
+	{CURLOPT_TIMECONDITION,       "timecondition",       JURL_PARAMTYPE_ENUM},
+	{CURLOPT_TIMEVALUE,           "timevalue",           JURL_PARAMTYPE_LONG},
+	{CURLOPT_TIMEVALUE_LARGE,     "timevalue-large",     JURL_PARAMTYPE_OFF_T},
+
+	// * connection options
+	{CURLOPT_TIMEOUT,                   "timeout",                   JURL_PARAMTYPE_LONG},
+	{CURLOPT_TIMEOUT_MS,                "timeout-ms",                JURL_PARAMTYPE_LONG},
+	{CURLOPT_LOW_SPEED_LIMIT,           "low-speed-limit",           JURL_PARAMTYPE_LONG},
+	{CURLOPT_LOW_SPEED_TIME,            "low-speed-time",            JURL_PARAMTYPE_LONG},
+	{CURLOPT_MAX_SEND_SPEED_LARGE,      "max-send-speed-large",      JURL_PARAMTYPE_OFF_T},
+	{CURLOPT_MAX_RECV_SPEED_LARGE,      "max-recv-speed-large",      JURL_PARAMTYPE_OFF_T},
+	{CURLOPT_MAXCONNECTS,               "maxconnects",               JURL_PARAMTYPE_LONG},
+	{CURLOPT_FRESH_CONNECT,             "fresh-connect",             JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_FORBID_REUSE,              "forbid-reuse",              JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_MAXAGE_CONN,               "maxage-conn",               JURL_PARAMTYPE_LONG},
+	{CURLOPT_MAXLIFETIME_CONN,          "maxlifetime-conn",          JURL_PARAMTYPE_LONG},
+	{CURLOPT_CONNECTTIMEOUT,            "connecttimeout",            JURL_PARAMTYPE_LONG},
+	{CURLOPT_CONNECTTIMEOUT_MS,         "connecttimeout-ms",         JURL_PARAMTYPE_LONG},
+	{CURLOPT_IPRESOLVE,                 "ipresolve",                 JURL_PARAMTYPE_ENUM},
+	{CURLOPT_CONNECT_ONLY,              "connect-only",              JURL_PARAMTYPE_LONG},
+	{CURLOPT_USE_SSL,                   "use-ssl",                   JURL_PARAMTYPE_ENUM},
+	{CURLOPT_RESOLVE,                   "resolve",                   JURL_PARAMTYPE_SLIST},
+	{CURLOPT_DNS_INTERFACE,             "dns-interface",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_DNS_LOCAL_IP4,             "dns-local-ip4",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_DNS_LOCAL_IP6,             "dns-local-ip6",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_DNS_SERVERS,               "dns-servers",               JURL_PARAMTYPE_STRING},
+	{CURLOPT_DNS_SHUFFLE_ADDRESSES,     "dns-shuffle-addresses",     JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_ACCEPTTIMEOUT_MS,          "accepttimeout-ms",          JURL_PARAMTYPE_LONG},
+	{CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS, "happy-eyeballs-timeout-ms", JURL_PARAMTYPE_LONG},
+	{CURLOPT_UPKEEP_INTERVAL_MS,        "upkeep-interval-ms",        JURL_PARAMTYPE_LONG},
+
+	// * ssl and security options
+	// TODO: holy shit it's long and I'm bored
+
+	// * ssh options
+	{CURLOPT_SSH_AUTH_TYPES,             "ssh-auth-types",             JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_SSH_COMPRESSION,            "ssh-compression",            JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSH_HOST_PUBLIC_KEY_MD5,    "ssh-host-public-key-md5",    JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSH_HOST_PUBLIC_KEY_SHA256, "ssh-host-public-key-sha256", JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSH_PUBLIC_KEYFILE,         "ssh-public-keyfile",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSH_PRIVATE_KEYFILE,        "ssh-private-keyfile",        JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSH_KNOWNHOSTS,             "ssh-knownhosts",             JURL_PARAMTYPE_STRING},
+	// SKIP: ssh-keyfunction: callback
+	// SKIP: ssh-keydata: callback
+	// SKIP: ssh-hostkeyfunction: callback
+	// SKIP: ssh-hostkeydata: callback
+
+	// * websocket options
+	// not present on my system for some reason
+	/* {CURLOPT_WS_OPTIONS, "ws-options", JURL_PARAMTYPE_BITMASK}, */
+
+	// * other options
+	// SKIP: private: complex representation
+	// SKIP: share: complex representation
+	{CURLOPT_NEW_FILE_PERMS,      "new-file-perms",      JURL_PARAMTYPE_LONG},
+	{CURLOPT_NEW_DIRECTORY_PERMS, "new-directory-perms", JURL_PARAMTYPE_LONG},
+	// not present on my system for some reason
+	/* {CURLOPT_QUICK_EXIT,          "quick-exit",          JURL_PARAMTYPE_BOOLEAN}, */
+
+	// * telnet options
+	{CURLOPT_TELNETOPTIONS, "telnetoptions", JURL_PARAMTYPE_SLIST},
+};
+
+JANET_CFUN(jurl_setopt) {
+	janet_fixarity(argc, 3);
+	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
+
+	const struct jurl_opt *opt;
+	Janet jopt = argv[1];
+	for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
+		if (janet_keyeq(jopt, jurl_opts[i].keyword)) {
+			opt = &jurl_opts[i];
+			break;
+		}
+	}
+	if (!opt) {
+		int num = janet_getinteger(argv, 1);
+		for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
+			if (num == jurl_opts[i].opt) {
+				opt = &jurl_opts[i];
+				break;
+			}
+		}
+	}
+	if (!opt) {
+		janet_panic("could not find option to set in jurl_setopt");
+	}
+
+	switch (opt->type) {
+		case JURL_PARAMTYPE_BOOLEAN:
+			if (janet_checktype(argv[2], JANET_NUMBER)) {
+				curl_easy_setopt(jurl->handle, opt->opt, janet_getinteger(argv, 2) == 0 ? 0 : 1);
+			} else {
+				curl_easy_setopt(jurl->handle, opt->opt, janet_truthy(argv[2]) ? 1 : 0);
+			}
+			break;
+		case JURL_PARAMTYPE_LONG:
+		case JURL_PARAMTYPE_OFF_T:
+			curl_easy_setopt(jurl->handle, opt->opt, janet_getinteger64(argv, 2));
+			break;
+		case JURL_PARAMTYPE_STRING:
+			// strings may be set to null
+			if (janet_checktype(argv[2], JANET_NIL)) {
+				curl_easy_setopt(jurl->handle, opt->opt, NULL);
+			} else {
+				curl_easy_setopt(jurl->handle, opt->opt, janet_getcstring(argv, 2));
+			}
+			break;
+		case JURL_PARAMTYPE_FILE:
+			// TODO: how to clean up leak?
+			janet_panic("jurl_setopt: FILE* not implemented");
+			break;
+		case JURL_PARAMTYPE_SLIST:
+			// TODO: make sure all slits are plain strings
+			janet_panic("jurl_setopt: slist not implemented");
+			break;
+		case JURL_PARAMTYPE_BITMASK:
+			// TODO: bitmask table
+			janet_panic("jurl_setopt: bitmasks not implemented");
+			break;
+		case JURL_PARAMTYPE_ENUM:
+			// TODO: enums table
+			janet_panic("jurl_setopt: enums not implemented");
+			break;
+		default:
+			janet_panic("jurl_setopt: unrecognized param type");
+	}
+
+	return janet_wrap_abstract(jurl);
+}
