@@ -9,6 +9,7 @@ enum jurl_paramtype {
 	JURL_PARAMTYPE_LONG,
 	JURL_PARAMTYPE_ENUM,
 	JURL_PARAMTYPE_OFF_T,
+	JURL_PARAMTYPE_CALLBACK,
 };
 struct jurl_opt {
 	CURLoption opt;
@@ -24,7 +25,37 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_NOSIGNAL,      "nosignal",      JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_WILDCARDMATCH, "wildcardmatch", JURL_PARAMTYPE_BOOLEAN},
 
-	// SKIP: * callback options, not really feasible
+	// * callback options
+	// we actually pass the function as the data, but expose "writefunction"
+	{CURLOPT_WRITEFUNCTION,            "writefunction",            JURL_PARAMTYPE_CALLBACK},
+	// SKIP: writedata: see above
+	{CURLOPT_READFUNCTION,             "readfunction",             JURL_PARAMTYPE_CALLBACK},
+	// SKIP: readdata: see above
+	// SKIP: ioctlfunction and ioctldata: janet ioctl capabilities are strictly lesser than libcurl; also deprecated
+	// SKIP: seekfunction and seekdata: seeking makes no sense here
+	// SKIP: sockoptfunction and sockoptdata: janet doesn't really interact with socket options directly
+	// SKIP: opensocketfunction and opensocketdata: I'm not sure janet sockets can be passed through nor much of a point given TLS
+	// SKIP: closesocketfunction and closesocketdata: see previous
+	// SKIP: progressfunction and progressdata: obsoleted by xferinfofunction
+	{CURLOPT_XFERINFOFUNCTION,         "xferinfofunction",         JURL_PARAMTYPE_CALLBACK},
+	// SKIP: xferinfodata: see above
+	{CURLOPT_HEADERFUNCTION,           "headerfunction",           JURL_PARAMTYPE_CALLBACK},
+	// SKIP: headerdata: see above
+	{CURLOPT_DEBUGFUNCTION,            "debugfunction",            JURL_PARAMTYPE_CALLBACK},
+	// SKIP: debugdata: see above
+	// SKIP: ssl-ctx-function and ssl-ctx-data: I'm not sure how this could possibly be used
+	// SKIP: conv-to-network-function; conv-from-network-function and conv-from-utf8-function: we can't pass a janet function to these; also obsolete
+	// SKIP: interleavefunction and interleave-data: I don't understand what this is tbh
+	// this one is a little bit complex; we only set BGN because END seemingly serves no purpose and we can only set one function for both
+	// this may change later if there's demand; though I doubt so
+	{CURLOPT_CHUNK_DATA,               "chunk-function",           JURL_PARAMTYPE_CALLBACK},
+	// SKIP: chunk-bgn-function and chunk-end-function: see previous
+	{CURLOPT_FNMATCH_FUNCTION,         "fnmatch-function",         JURL_PARAMTYPE_CALLBACK},
+	// SKIP: fnmatch-data: see above
+	{CURLOPT_SUPPRESS_CONNECT_HEADERS, "suppress-connect-headers", JURL_PARAMTYPE_BOOLEAN},
+	// SKIP: resolver-start-function and resolver-start-data: not useful
+	{CURLOPT_PREREQFUNCTION,           "prereqfunction",           JURL_PARAMTYPE_CALLBACK},
+	// SKIP: prereqdata: see above
 
 	// * error options
 	// SKIP: errorbuffer: complex
@@ -338,6 +369,10 @@ JANET_CFUN(jurl_setopt) {
 		case JURL_PARAMTYPE_ENUM:
 			// TODO: enums table
 			janet_panic("jurl_setopt: enums not implemented");
+			break;
+		case JURL_PARAMTYPE_CALLBACK:
+			// callbacks are complex and need individual handling
+			jurl_setcallback(jurl, opt->opt, janet_getfunction(argv, 2));
 			break;
 		default:
 			janet_panic("jurl_setopt: unrecognized param type");

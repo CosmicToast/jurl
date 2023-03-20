@@ -31,5 +31,11 @@ JANET_CFUN(jurl_perform);
 extern JANET_API const JanetAbstractType jurl_type;
 #endif
 
+// jurl_callbacks.c
+CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun);
+
+// jurl_getinfo.c
+JANET_CFUN(jurl_getopt);
+
 // jurl_setopt.c
 JANET_CFUN(jurl_setopt);
