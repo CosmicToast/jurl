@@ -7,6 +7,18 @@ int jurl_gc(void *p, size_t s) {
 	(void) s;
 	jurl_handle *jurl = (jurl_handle*)p;
 	if (jurl->handle) curl_easy_cleanup(jurl->handle);
+	while (jurl->cleanup) {
+		struct jurl_cleanup *cur = jurl->cleanup;
+		switch (cur->type) {
+		case JURL_CLEANUP_TYPE_SLIST:
+			curl_slist_free_all(cur->slist);
+			break;
+		default:
+			janet_panic("unknown type of cleanup data in jurl_gc");
+		}
+		jurl->cleanup = cur->next;
+		free(cur);
+	}
 	return 0;
 }
 
@@ -25,6 +37,14 @@ JANET_CFUN(jurl_new) {
 	curl_easy_setopt(jurl->handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
 
 	return janet_wrap_abstract(jurl);
+}
+
+struct jurl_cleanup *register_cleanup(jurl_handle *jurl, enum jurl_cleanup_type type) {
+	struct jurl_cleanup *out = malloc(sizeof(struct jurl_cleanup));
+	out->next = jurl->cleanup;
+	jurl->cleanup = out;
+	out->type = type;
+	return out;
 }
 
 JANET_CFUN(jurl_reset) {

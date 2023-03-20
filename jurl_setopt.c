@@ -312,10 +312,25 @@ JANET_CFUN(jurl_setopt) {
 			// TODO: how to clean up leak?
 			janet_panic("jurl_setopt: FILE* not implemented");
 			break;
-		case JURL_PARAMTYPE_SLIST:
-			// TODO: make sure all slits are plain strings
-			janet_panic("jurl_setopt: slist not implemented");
+		case JURL_PARAMTYPE_SLIST: {
+			// we register the cleanup ahead of time, because...
+			struct jurl_cleanup *clean = register_cleanup(jurl, JURL_CLEANUP_TYPE_SLIST);
+
+			JanetView args = janet_getindexed(argv, 2);
+			for (int32_t i = 0; i < args.len; i++) {
+				const char *s = janet_getcstring(args.items, i);
+				// we use the cleanup pointer directly, this way...
+				struct curl_slist *newlist = curl_slist_append(clean->slist, s);
+				if (!newlist) {
+					// if we ever panic in the *middle* of handling,
+					// the slist will get cleaned up during garbage collection anyway
+					janet_panic("failed to append to slist in jurl_setopt");
+				}
+				clean->slist = newlist;
+			}
+			curl_easy_setopt(jurl->handle, opt->opt, clean->slist);
 			break;
+		}
 		case JURL_PARAMTYPE_BITMASK:
 			// TODO: bitmask table
 			janet_panic("jurl_setopt: bitmasks not implemented");
