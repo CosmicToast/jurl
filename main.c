@@ -19,6 +19,16 @@ JANET_FN(jurl_dup,
 		"(jurl-native/dup handle)",
 		"Duplicate an existing jurl handle");
 
+JANET_FN(jurl_global_init,
+		"(jurl-native/global-init)"
+		"\n"
+		"(jurl-native/global-init :ssl)",
+		"Run curl global init");
+
+JANET_FN(jurl_global_cleanup,
+		"(jurl-native/global-cleanup)",
+		"Run curl global cleanup");
+
 JANET_FN(jurl_perform,
 		"(jurl-native/perform handle)",
 		"Perform the request associated with a handle");
@@ -42,6 +52,8 @@ static const JanetRegExt cfuns[] = {
 	JANET_REG("new", jurl_new),
 	JANET_REG("reset", jurl_reset),
 	JANET_REG("dup", jurl_dup),
+	JANET_REG("global-init", jurl_global_init),
+	JANET_REG("global-cleanup", jurl_global_cleanup),
 	JANET_REG("perform", jurl_perform),
 
 	// jurl_getinfo.c

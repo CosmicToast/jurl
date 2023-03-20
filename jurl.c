@@ -16,7 +16,7 @@ const JanetAbstractType jurl_type = {
 	JANET_ATEND_GC
 };
 
-Janet jurl_new(int32_t argc, Janet *argv) {
+JANET_CFUN(jurl_new) {
 	janet_fixarity(argc, 0);
 	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
 	jurl->handle = curl_easy_init();
@@ -27,19 +27,55 @@ Janet jurl_new(int32_t argc, Janet *argv) {
 	return janet_wrap_abstract(jurl);
 }
 
-Janet jurl_reset(int32_t argc, Janet *argv) {
+JANET_CFUN(jurl_reset) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
 	curl_easy_reset(jurl->handle);
 	return janet_wrap_abstract(jurl);
 }
 
-Janet jurl_dup(int32_t argc, Janet *argv) {
+JANET_CFUN(jurl_dup) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
 	jurl_handle *newj = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
 	newj->handle = curl_easy_duphandle(jurl->handle);
 	return janet_wrap_abstract(newj);
+}
+
+JANET_CFUN(jurl_global_init) {
+	long flags;
+	if (argc == 0) {
+		flags = CURL_GLOBAL_ALL;
+		goto global_init_ret;
+	}
+	for (size_t i = 0; i < argc; i++) {
+		Janet kw = argv[i];
+		if(!janet_checktype(kw, JANET_KEYWORD)) {
+			janet_panicf(
+					"jurl_global_init: received a non-keyword argument of type %T: %v",
+					janet_type(kw), kw);
+		}
+		if (janet_keyeq(kw, "all")) {
+			flags |= CURL_GLOBAL_ALL;
+		} else if (janet_keyeq(kw, "ssl")) {
+			flags |= CURL_GLOBAL_SSL;
+		} else if (janet_keyeq(kw, "win32")) {
+			flags |= CURL_GLOBAL_WIN32;
+		} else if (janet_keyeq(kw, "nothing")) {
+			flags |= CURL_GLOBAL_NOTHING;
+		} else if (janet_keyeq(kw, "ack-eintr")) {
+			flags |= CURL_GLOBAL_ACK_EINTR;
+		} else {
+			janet_panicf("jurl_global_init: unknown keyword %v", kw);
+		}
+	}
+global_init_ret:
+	return janet_wrap_integer(curl_global_init(flags));
+}
+
+JANET_CFUN(jurl_global_cleanup) {
+	curl_global_cleanup();
+	return janet_wrap_nil();
 }
 
 size_t write_buffer_callback(void *contents, size_t size, size_t nmemb, void* userp) {
@@ -48,7 +84,7 @@ size_t write_buffer_callback(void *contents, size_t size, size_t nmemb, void* us
 	return realsize;
 }
 
-Janet jurl_perform(int32_t argc, Janet *argv) {
+JANET_CFUN(jurl_perform) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
 
