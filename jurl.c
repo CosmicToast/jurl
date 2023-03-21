@@ -107,22 +107,6 @@ size_t write_buffer_callback(void *contents, size_t size, size_t nmemb, void* us
 JANET_CFUN(jurl_perform) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
-
-	// receiving data slots
-	JanetBuffer *buf = janet_buffer(0);
-	JanetTable  *out = janet_table(3);
-
-	curl_easy_setopt(jurl->handle, CURLOPT_WRITEFUNCTION, write_buffer_callback);
-	curl_easy_setopt(jurl->handle, CURLOPT_WRITEDATA, (void*)buf);
 	CURLcode res = curl_easy_perform(jurl->handle);
-
-	// get results back
-	janet_table_put(out, janet_ckeywordv("curlcode"), janet_wrap_integer(res));
-	janet_table_put(out, janet_ckeywordv("body"), janet_wrap_buffer(buf));
-
-	// also the status
-	long codep = 0;
-	if (res == CURLE_OK) res = curl_easy_getinfo(jurl->handle, CURLINFO_RESPONSE_CODE, &codep);
-	janet_table_put(out, janet_ckeywordv("status"), janet_wrap_integer(codep));
-	return janet_wrap_struct(janet_table_to_struct(out));
+	return janet_wrap_boolean(res == CURLE_OK);
 }
