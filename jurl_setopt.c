@@ -340,8 +340,7 @@ JANET_CFUN(jurl_setopt) {
 			}
 			break;
 		case JURL_PARAMTYPE_FILE:
-			// TODO: how to clean up leak?
-			janet_panic("jurl_setopt: FILE* not implemented");
+			curl_easy_setopt(jurl->handle, opt->opt, janet_getjfile(argv, 2));
 			break;
 		case JURL_PARAMTYPE_SLIST: {
 			// we register the cleanup ahead of time, because...
