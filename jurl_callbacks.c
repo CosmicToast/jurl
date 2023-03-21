@@ -47,6 +47,19 @@ static int progress_callback(void *clientp,
 	return janet_truthy(res) ? CURL_PROGRESSFUNC_CONTINUE : 1;
 }
 
+static size_t header_callback(char *buffer,
+                              size_t size,
+                              size_t nitems,
+                              void *userdata) {
+	JanetFunction *fun = (JanetFunction*)userdata;
+	size_t realsize = size * nitems;
+
+	Janet argv[1] = { janet_stringv((const uint8_t*)buffer, realsize), };
+	janet_call(fun, 1, argv);
+
+	return realsize;
+}
+
 static int debug_callback(CURL *handle,
                    curl_infotype type,
                    char *data,
@@ -139,6 +152,10 @@ CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun)
 		case CURLOPT_XFERINFOFUNCTION: // dltotal, dlnow, ultotal, ulnow -> boolean
 			res |= curl_easy_setopt(jurl->handle, CURLOPT_XFERINFODATA, fun);
 			res |= curl_easy_setopt(jurl->handle, CURLOPT_XFERINFOFUNCTION, progress_callback);
+			break;
+		case CURLOPT_HEADERFUNCTION: // string -> void
+			res |= curl_easy_setopt(jurl->handle, CURLOPT_HEADERDATA, fun);
+			res |= curl_easy_setopt(jurl->handle, CURLOPT_HEADERFUNCTION, header_callback);
 			break;
 		case CURLOPT_DEBUGFUNCTION:
 			// curl*,
