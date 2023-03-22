@@ -33,6 +33,13 @@ JANET_FN(jurl_perform,
 		"(jurl-native/perform handle)",
 		"Perform the request associated with a handle");
 
+// jurl_errors.c
+JANET_FN(jurl_geterror,
+		"(jurl-native/geterror :error/write-error)"
+		"\n"
+		"(jurl-native/geterror 1234)",
+		"Get an explanation string about a jurl error");
+
 // jurl_getinfo.c
 JANET_FN(jurl_getinfo,
 		"(jurl-native/getinfo handle :info)"
@@ -55,6 +62,9 @@ static const JanetRegExt cfuns[] = {
 	JANET_REG("global-init", jurl_global_init),
 	JANET_REG("global-cleanup", jurl_global_cleanup),
 	JANET_REG("perform", jurl_perform),
+
+	// jurl_errors.c
+	JANET_REG("geterror", jurl_geterror),
 
 	// jurl_getinfo.c
 	JANET_REG("getinfo", jurl_getinfo),

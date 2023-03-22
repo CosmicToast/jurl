@@ -34,6 +34,10 @@ CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun)
 // jurl_enums.c
 CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val);
 
+// jurl_errors.c
+Janet jurl_geterror(CURLcode code);
+JANET_CFUN(jurl_strerror);
+
 // jurl_getinfo.c
 JANET_CFUN(jurl_getopt);
 
