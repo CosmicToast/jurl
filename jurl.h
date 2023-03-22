@@ -34,6 +34,9 @@ extern JANET_API const JanetAbstractType jurl_type;
 // jurl_callbacks.c
 CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun);
 
+// jurl_enums.c
+CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val);
+
 // jurl_getinfo.c
 JANET_CFUN(jurl_getopt);
 

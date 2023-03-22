@@ -7,7 +7,7 @@
   :cflags [;default-cflags]
   :lflags [;default-lflags "-lcurl" "-undefined" "error"]
   :headers ["jurl.h"]
-  :source ["main.c" "jurl.c" "jurl_callbacks.c" "jurl_getinfo.c" "jurl_setopt.c"])
+  :source ["main.c" "jurl.c" "jurl_callbacks.c" "jurl_enums.c" "jurl_getinfo.c" "jurl_setopt.c"])
 
 (declare-source
   :source "jurl.janet")

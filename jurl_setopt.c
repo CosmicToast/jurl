@@ -3,7 +3,6 @@
 enum jurl_paramtype {
 	JURL_PARAMTYPE_BOOLEAN,
 	JURL_PARAMTYPE_STRING,
-	JURL_PARAMTYPE_BITMASK,
 	JURL_PARAMTYPE_SLIST,
 	JURL_PARAMTYPE_FILE,
 	JURL_PARAMTYPE_LONG,
@@ -78,7 +77,7 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_NOPROXY,              "noproxy",              JURL_PARAMTYPE_STRING},
 	{CURLOPT_HTTPPROXYTUNNEL,      "httpproxytunnel",      JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_CONNECT_TO,           "connect-to",           JURL_PARAMTYPE_SLIST},
-	{CURLOPT_SOCKS5_AUTH,          "socks5-auth",          JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_SOCKS5_AUTH,          "socks5-auth",          JURL_PARAMTYPE_ENUM},
 	// SKIP: socks5-gssapi-service: deprecated for service-name
 	{CURLOPT_SOCKS5_GSSAPI_NEC,    "socsk5-gssapi-nec",    JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_PROXY_SERVICE_NAME,   "proxy-service-name",   JURL_PARAMTYPE_STRING},
@@ -111,14 +110,14 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_LOGIN_OPTIONS,            "login-options",            JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXYUSERNAME,            "proxyusername",            JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXYPASSWORD,            "proxypassword",            JURL_PARAMTYPE_STRING},
-	{CURLOPT_HTTPAUTH,                 "httpauth",                 JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_HTTPAUTH,                 "httpauth",                 JURL_PARAMTYPE_ENUM},
 	{CURLOPT_TLSAUTH_USERNAME,         "tlsauth-username",         JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXY_TLSAUTH_USERNAME,   "proxy-tlsauth-username",   JURL_PARAMTYPE_STRING},
 	{CURLOPT_TLSAUTH_PASSWORD,         "tlsauth-password",         JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXY_TLSAUTH_PASSWORD,   "proxy-tlsauth-password",   JURL_PARAMTYPE_STRING},
 	{CURLOPT_TLSAUTH_TYPE,             "tlsauth-type",             JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXY_TLSAUTH_TYPE,       "proxy-tlsauth-type",       JURL_PARAMTYPE_STRING},
-	{CURLOPT_PROXYAUTH,                "proxyauth",                JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_PROXYAUTH,                "proxyauth",                JURL_PARAMTYPE_ENUM},
 	{CURLOPT_SASL_AUTHZID,             "sasl-authzid",             JURL_PARAMTYPE_STRING},
 	{CURLOPT_SASL_IR,                  "sasl-ir",                  JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_XOAUTH2_BEARER,           "xoauth2-bearer",           JURL_PARAMTYPE_STRING},
@@ -131,7 +130,7 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_FOLLOWLOCATION,         "followlocation",         JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_UNRESTRICTED_AUTH,      "unrestricted-auth",      JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_MAXREDIRS,              "maxredirs",              JURL_PARAMTYPE_LONG},
-	{CURLOPT_POSTREDIR,              "postredir",              JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_POSTREDIR,              "postredir",              JURL_PARAMTYPE_ENUM},
 	// SKIP: put: deprecated for upload
 	{CURLOPT_POST,                   "post",                   JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_POSTFIELDS,             "postfields",             JURL_PARAMTYPE_STRING},
@@ -142,7 +141,7 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_REFERER,                "referer",                JURL_PARAMTYPE_STRING},
 	{CURLOPT_USERAGENT,              "useragent",              JURL_PARAMTYPE_STRING},
 	{CURLOPT_HTTPHEADER,             "httpheader",             JURL_PARAMTYPE_SLIST},
-	{CURLOPT_HEADEROPT,              "headeropt",              JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_HEADEROPT,              "headeropt",              JURL_PARAMTYPE_ENUM},
 	{CURLOPT_PROXYHEADER,            "proxyheader",            JURL_PARAMTYPE_SLIST},
 	{CURLOPT_HTTP200ALIASES,         "http200aliases",         JURL_PARAMTYPE_SLIST},
 	{CURLOPT_COOKIE,                 "cookie",                 JURL_PARAMTYPE_STRING},
@@ -151,9 +150,9 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_COOKIESESSION,          "cookiesession",          JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_COOKIELIST,             "cookielist",             JURL_PARAMTYPE_STRING},
 	{CURLOPT_ALTSVC,                 "altsvc",                 JURL_PARAMTYPE_STRING},
-	{CURLOPT_ALTSVC_CTRL,            "altsvc-ctrl",            JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_ALTSVC_CTRL,            "altsvc-ctrl",            JURL_PARAMTYPE_ENUM},
 	{CURLOPT_HSTS,                   "hsts",                   JURL_PARAMTYPE_STRING},
-	{CURLOPT_HSTS_CTRL,              "hsts-ctrl",              JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_HSTS_CTRL,              "hsts-ctrl",              JURL_PARAMTYPE_ENUM},
 	// SKIP: hstsreadfunction: callback
 	// SKIP: hstsreaddata: callback
 	// SKIP: hstswritefunction: callback
@@ -228,7 +227,7 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_UPLOAD,              "upload",              JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_UPLOAD_BUFFERSIZE,   "upload-buffersize",   JURL_PARAMTYPE_LONG},
 	// TODO: mimepost
-	{CURLOPT_MIME_OPTIONS,        "mime-options",        JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_MIME_OPTIONS,        "mime-options",        JURL_PARAMTYPE_ENUM},
 	{CURLOPT_MAXFILESIZE,         "maxfilesize",         JURL_PARAMTYPE_LONG},
 	{CURLOPT_MAXFILESIZE_LARGE,   "maxfilesize-large",   JURL_PARAMTYPE_OFF_T},
 	{CURLOPT_TIMECONDITION,       "timecondition",       JURL_PARAMTYPE_ENUM},
@@ -266,7 +265,7 @@ static const struct jurl_opt jurl_opts[] = {
 	// TODO: holy shit it's long and I'm bored
 
 	// * ssh options
-	{CURLOPT_SSH_AUTH_TYPES,             "ssh-auth-types",             JURL_PARAMTYPE_BITMASK},
+	{CURLOPT_SSH_AUTH_TYPES,             "ssh-auth-types",             JURL_PARAMTYPE_ENUM},
 	{CURLOPT_SSH_COMPRESSION,            "ssh-compression",            JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_SSH_HOST_PUBLIC_KEY_MD5,    "ssh-host-public-key-md5",    JURL_PARAMTYPE_STRING},
 	{CURLOPT_SSH_HOST_PUBLIC_KEY_SHA256, "ssh-host-public-key-sha256", JURL_PARAMTYPE_STRING},
@@ -280,7 +279,7 @@ static const struct jurl_opt jurl_opts[] = {
 
 	// * websocket options
 	// not present on my system for some reason
-	/* {CURLOPT_WS_OPTIONS, "ws-options", JURL_PARAMTYPE_BITMASK}, */
+	/* {CURLOPT_WS_OPTIONS, "ws-options", JURL_PARAMTYPE_ENUM}, */
 
 	// * other options
 	// SKIP: private: complex representation
@@ -361,13 +360,8 @@ JANET_CFUN(jurl_setopt) {
 			curl_easy_setopt(jurl->handle, opt->opt, clean->slist);
 			break;
 		}
-		case JURL_PARAMTYPE_BITMASK:
-			// TODO: bitmask table
-			janet_panic("jurl_setopt: bitmasks not implemented");
-			break;
 		case JURL_PARAMTYPE_ENUM:
-			// TODO: enums table
-			janet_panic("jurl_setopt: enums not implemented");
+			jurl_setenum(jurl, opt->opt, argv[2]);
 			break;
 		case JURL_PARAMTYPE_CALLBACK:
 			// callbacks are complex and need individual handling
