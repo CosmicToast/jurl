@@ -40,7 +40,7 @@ Janet jurl_geterror(CURLcode code);
 JANET_CFUN(jurl_strerror);
 
 // jurl_getinfo.c
-JANET_CFUN(jurl_getopt);
+JANET_CFUN(jurl_getinfo);
 
 // jurl_setopt.c
 JANET_CFUN(jurl_setopt);

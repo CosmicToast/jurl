@@ -20,10 +20,29 @@ int jurl_gc(void *p, size_t s) {
 	return 0;
 }
 
+static JanetMethod jurl_methods[] = {
+	{"reset",   jurl_reset},
+	{"dup",     jurl_dup},
+	{"perform", jurl_perform},
+	{"getinfo", jurl_getinfo},
+	{"setopt",  jurl_setopt},
+	{NULL,      NULL},
+};
+
+static int jurl_get(void *p, Janet key, Janet *out) {
+	(void) p;
+	if (!janet_checktype(key, JANET_KEYWORD)) {
+		return 0;
+	}
+	return janet_getmethod(janet_unwrap_keyword(key), jurl_methods, out);
+}
+
 const JanetAbstractType jurl_type = {
 	"jurl",       // name
 	jurl_gc,      // gc
-	JANET_ATEND_GC
+	NULL,		  // gcmark
+	jurl_get,     // get
+	JANET_ATEND_GET
 };
 
 jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
@@ -122,3 +141,4 @@ JANET_CFUN(jurl_perform) {
 	jurl_handle *jurl = (jurl_handle*)janet_getjurl(argv, 0);
 	return jurl_geterror(curl_easy_perform(jurl->handle));
 }
+
