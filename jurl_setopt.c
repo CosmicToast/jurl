@@ -68,7 +68,7 @@ static const struct jurl_opt jurl_opts[] = {
 	// SKIP: protocols: deprecated for protocols-str
 	{CURLOPT_PROTOCOLS_STR,        "protocols",            JURL_PARAMTYPE_STRING},
 	// SKIP: redir-protocols: deprecated for redir-protocols-str
-	{CURLOPT_REDIR_PROTOCOLS,      "redir-protocols",      JURL_PARAMTYPE_STRING},
+	{CURLOPT_REDIR_PROTOCOLS_STR,  "redir-protocols",      JURL_PARAMTYPE_STRING},
 	{CURLOPT_DEFAULT_PROTOCOL,     "default-protocol",     JURL_PARAMTYPE_STRING},
 	{CURLOPT_PROXY,                "proxy",                JURL_PARAMTYPE_STRING},
 	{CURLOPT_PRE_PROXY,            "pre-proxy",            JURL_PARAMTYPE_STRING},

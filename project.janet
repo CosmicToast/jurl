@@ -5,7 +5,7 @@
 (declare-native
   :name "jurl-native"
   :cflags [;default-cflags]
-  :lflags [;default-lflags "-lcurl" "-undefined" "error"]
+  :lflags [;default-lflags "-lcurl"]
   :headers ["jurl.h"]
   :source ["main.c" "jurl.c" "jurl_callbacks.c" "jurl_enums.c" "jurl_errors.c" "jurl_getinfo.c" "jurl_setopt.c"])
 
