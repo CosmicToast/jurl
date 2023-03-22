@@ -70,7 +70,9 @@ static const struct jurl_enum jurl_enums[] = {
 	{CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS,              "http-version/2tls"},
 	{CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE, "http-version/2-prior-knowledge"},
 	{CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3,                 "http-version/3"},
-	/* {CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3ONLY,             "http-version/3only"}, */
+#if CURL_AT_LEAST_VERSION(7,88,0)
+	{CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3ONLY,             "http-version/3only"},
+#endif
 
 	{CURLOPT_FTP_CREATE_MISSING_DIRS, CURLFTP_CREATE_DIR_NONE,  "ftp-create-dir/none"},
 	{CURLOPT_FTP_CREATE_MISSING_DIRS, CURLFTP_CREATE_DIR,       "ftp-create-dir/dir"},

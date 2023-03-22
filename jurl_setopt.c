@@ -278,16 +278,18 @@ static const struct jurl_opt jurl_opts[] = {
 	// SKIP: ssh-hostkeydata: callback
 
 	// * websocket options
-	// not present on my system for some reason
-	/* {CURLOPT_WS_OPTIONS, "ws-options", JURL_PARAMTYPE_ENUM}, */
+#if CURL_AT_LEAST_VERSION(7,86,0)
+	{CURLOPT_WS_OPTIONS, "ws-options", JURL_PARAMTYPE_ENUM},
+#endif
 
 	// * other options
 	// SKIP: private: complex representation
 	// SKIP: share: complex representation
 	{CURLOPT_NEW_FILE_PERMS,      "new-file-perms",      JURL_PARAMTYPE_LONG},
 	{CURLOPT_NEW_DIRECTORY_PERMS, "new-directory-perms", JURL_PARAMTYPE_LONG},
-	// not present on my system for some reason
-	/* {CURLOPT_QUICK_EXIT,          "quick-exit",          JURL_PARAMTYPE_BOOLEAN}, */
+#if CURL_AT_LEAST_VERSION(7,87,0)
+	{CURLOPT_QUICK_EXIT,          "quick-exit",          JURL_PARAMTYPE_BOOLEAN},
+#endif
 
 	// * telnet options
 	{CURLOPT_TELNETOPTIONS, "telnetoptions", JURL_PARAMTYPE_SLIST},
