@@ -1,85 +1,57 @@
 (import jurl-native)
 
-(jurl-native/global-init)
+# = global init
 
-# TODO: POST_REDIR
-(var *default-options* {:default-protocol "https"
-                        :followlocation   true
-                        :useragent        "Jurl/1.0"})
+# global init on import
+(let [g (jurl-native/global-init)]
+  (when (not= :ok g)
+    (error (jurl-native/strerror g))))
 
-# this is a bit janky but also quite efficient
-(def-  bodybuf @"")
-(defn- write-callback [b]
-  (buffer/push bodybuf b))
+# = simple client
 
-(def- headerbuf @[])
-(defn- header-callback [h]
-  (array/push headerbuf h))
+(defn- apply-opts
+  [handle opts]
+  (->> opts
+       (pairs)
+       (map (fn [[k v]] (:setopt handle k v)))))
 
-(defn- array-move [a]
-  (defer (array/clear a)
-    (array/slice a)))
+# default-options get applied to the simple client on every reset
+# they are indeed meant as "defaults"
+(var *default-options* @{:default-protocol "https"
+                         :followlocation   true
+                         :postredir        :redir-post/all
+                         :useragent        "Jurl/1.0"})
 
-(defn- buffer-move [b]
-  (defer (buffer/clear b)
-    (buffer/slice b)))
+# the simple client is a tiny iterative layer on top of the native handle
+# the latter being preferrable for anyone building their own wrapper
+# it's intended for relatively low level use, but still usable directly
+# the primary purpose is to allow options to be persisted
+(def Simple @{:type "JurlSimpleClient"
+               :handle  nil # don't forget to populate
+               :options nil # don't forget to populate
+               
+               :getinfo |(:getinfo ($ :handle) $1)
+               :perform (fn [s &opt opts]
+                          (when opts (apply-opts (s :handle) opts))
+                          (:perform (s :handle))
+                          s)
+               :reset (fn [s]
+                        (:reset (s :handle))
+                        (apply-opts (s :handle) (merge *default-options* (s :options)))
+                        s)
+               :setopt (fn [s k v]
+                         (put (s :options) k v)
+                         (:setopt (s :handle) k v)
+                         s)})
 
-# Low level client
-(def Low @{:type "JurlLowClient"
-           :handle nil # make sure to set this
-
-           # native forwards
-           # we want to use reset so this is native reset
-           :nreset  |(jurl-native/reset   ($ :handle))
-           :dup     |(jurl-native/dup     ($ :handle))
-           :perform |(jurl-native/perform ($ :handle))
-           :getinfo |(jurl-native/getinfo ($ :handle) $1)
-           # we want to use setopt so this is native setopt
-           :nsetopt |(jurl-native/setopt  ($ :handle) $1 $2)
-
-           :options @{}
-           :setmethod (fn [self method]
-                        (case method
-                          :get      (:nsetopt self :httpget true)
-                          :post     (:nsetopt self :post true)
-                          :head (do (:setmethod self :get)
-                                    (:nsetopt self :nobody true))
-                          :put      (:nsetopt self :upload true)
-                          :delete   (:nsetopt self :customrequest "DELETE")
-                          :connect  (:nsetopt self :customrequest "CONNECT")
-                          :options  (:nsetopt self :customrequest "OPTIONS")
-                          :trace    (:nsetopt self :customrequest "TRACE")
-                          :patch    (:nsetopt self :customrequest "PATCH")))
-           :applyopts (fn [self opts]
-                        (->> opts
-                             (pairs)
-                             (map (fn [[k v]] (:nsetopt self k v)))))
-           :setopt (fn [self k v]
-                     (put (self :options) k v)
-                     (:nsetopt self k v))
-           :reset (fn [self]
-                    (:nreset self)
-                    (:applyopts self (merge *default-options* (self :options)))
-                    self)
-
-           # actual work being done for once
-           # you don't have to use this one, you can handle this stuff yourself too
-           :request (fn [self url &opt opts]
-                      (defer (:reset self)
-                        (when opts (:applyopts self opts))
-                        (:nsetopt self :url url)
-                        (:nsetopt self :writefunction write-callback)
-                        (:nsetopt self :headerfunction header-callback)
-                        (when (:perform self)
-                          {:status (:getinfo self :response-code)
-                           :body (buffer-move bodybuf)
-                           :headers (array-move headerbuf)})))})
-
-(defn make-client
-  []
-  (-> @{:handle (jurl-native/new)}
-      (table/setproto Low)
+(defn new-simple
+  [&opt opts &named handle]
+  (default handle (jurl-native/new))
+  (default opts @{})
+  (-> @{:handle handle
+        :options opts}
+      (table/setproto Simple)
       (:reset)))
 
-(var *default-client* (make-client))
-(defn request [url &opt opts] (:request *default-client* url opts))
+# no forward declarations that feel nice but this is a small function so it's fine
+(put Simple :dup |(new-simple ($ :options) (:dup ($ :handle))))
