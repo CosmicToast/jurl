@@ -26,10 +26,7 @@ JANET_CFUN(jurl_new);
 JANET_CFUN(jurl_reset);
 JANET_CFUN(jurl_dup);
 JANET_CFUN(jurl_perform);
-
-#ifndef JURL_C
-extern JANET_API const JanetAbstractType jurl_type;
-#endif
+jurl_handle *janet_getjurl(Janet *argv, int32_t n);
 
 // jurl_callbacks.c
 CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun);

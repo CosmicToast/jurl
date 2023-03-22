@@ -1,6 +1,4 @@
 // jurl.c - a curl_easy minimal wrapper for janet
-
-#define JURL_C
 #include "jurl.h"
 
 int jurl_gc(void *p, size_t s) {
@@ -28,6 +26,10 @@ const JanetAbstractType jurl_type = {
 	JANET_ATEND_GC
 };
 
+jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
+	return (jurl_handle*)janet_getabstract(argv, n, &jurl_type);
+}
+
 JANET_CFUN(jurl_new) {
 	janet_fixarity(argc, 0);
 	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
@@ -49,14 +51,14 @@ struct jurl_cleanup *register_cleanup(jurl_handle *jurl, enum jurl_cleanup_type 
 
 JANET_CFUN(jurl_reset) {
 	janet_fixarity(argc, 1);
-	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
+	jurl_handle *jurl = janet_getjurl(argv, 0);
 	curl_easy_reset(jurl->handle);
 	return janet_wrap_abstract(jurl);
 }
 
 JANET_CFUN(jurl_dup) {
 	janet_fixarity(argc, 1);
-	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
+	jurl_handle *jurl = janet_getjurl(argv, 0);
 	jurl_handle *newj = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
 	newj->handle = curl_easy_duphandle(jurl->handle);
 	return janet_wrap_abstract(newj);
@@ -106,7 +108,7 @@ size_t write_buffer_callback(void *contents, size_t size, size_t nmemb, void* us
 
 JANET_CFUN(jurl_perform) {
 	janet_fixarity(argc, 1);
-	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
+	jurl_handle *jurl = (jurl_handle*)janet_getjurl(argv, 0);
 	CURLcode res = curl_easy_perform(jurl->handle);
 	return janet_wrap_boolean(res == CURLE_OK);
 }

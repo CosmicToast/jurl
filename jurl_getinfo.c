@@ -90,7 +90,7 @@ static const struct jurl_opt jurl_opts[] = {
 
 JANET_CFUN(jurl_getinfo) {
 	janet_fixarity(argc, 2);
-	jurl_handle *jurl = (jurl_handle*)janet_getabstract(argv, 0, &jurl_type);
+	jurl_handle *jurl = janet_getjurl(argv, 0);
 	CURL* curl = jurl->handle;
 
 	const struct jurl_opt *opt;
