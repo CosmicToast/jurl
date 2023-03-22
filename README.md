@@ -11,7 +11,7 @@ In cases of bitmaps and enums (including magic numbers), they are translated as 
 For example, `CURLOPT_TCP_FASTOPEN` becomes `:tcp-fastopen`.
 
 Enums (and bitmap members) are translated using a prefix notation.
-For example, `CURLPROXY_HTTP` becomes `:proxytype/http`.
+For example, `CURLPROXY_HTTP` becomes `:proxy/http`.
 
 Bitmaps are translates back and forth using indexables (arrays and tuples).
-For example, `CURLAUTH_BASIC | CURLAUTH_DIGEST` becomes `[:httpauth/basic :httpauth/digest]`.
+For example, `CURLAUTH_BASIC | CURLAUTH_DIGEST` becomes `[:auth/basic :auth/digest]`.
