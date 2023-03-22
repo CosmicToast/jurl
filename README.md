@@ -4,6 +4,16 @@ Janet Curl (secretly Jean Curl)
 A libcurl easy API wrapper for Janet.
 It's divided into two components: `jurl-native`, which holds the low level C interfacing, and the high level `jurl` janet wrapper.
 
+`jurl-native` is relatively feature-complete and is now mostly in maintenance mode.
+Potential improvements are:
+* gate additional features behind version checks
+* implement the (very) few curl_easy things still left out (mostly things that I can't think of a sane way to represent)
+
+`jurl` is under active construction.
+
+## Jurl
+A higher level API that's currently in construction.
+
 ## Jurl-Native
 `jurl-native` attempts to implement as much of libcurl's easy API in as direct a manner as possible.
 
