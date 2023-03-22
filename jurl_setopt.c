@@ -323,25 +323,39 @@ JANET_CFUN(jurl_setopt) {
 	switch (opt->type) {
 		case JURL_PARAMTYPE_BOOLEAN:
 			if (janet_checktype(argv[2], JANET_NUMBER)) {
-				curl_easy_setopt(jurl->handle, opt->opt, janet_getinteger(argv, 2) == 0 ? 0 : 1);
+				return jurl_geterror(
+					curl_easy_setopt(
+						jurl->handle, opt->opt, janet_getinteger(argv, 2) == 0 ? 0 : 1
+					));
 			} else {
-				curl_easy_setopt(jurl->handle, opt->opt, janet_truthy(argv[2]) ? 1 : 0);
+				return jurl_geterror(
+					curl_easy_setopt(
+						jurl->handle, opt->opt, janet_truthy(argv[2]) ? 1 : 0
+					));
 			}
 			break;
 		case JURL_PARAMTYPE_LONG:
 		case JURL_PARAMTYPE_OFF_T:
-			curl_easy_setopt(jurl->handle, opt->opt, janet_getinteger64(argv, 2));
+			return jurl_geterror(
+				curl_easy_setopt(jurl->handle, opt->opt, janet_getinteger64(argv, 2)
+				));
 			break;
 		case JURL_PARAMTYPE_STRING:
 			// strings may be set to null
 			if (janet_checktype(argv[2], JANET_NIL)) {
-				curl_easy_setopt(jurl->handle, opt->opt, NULL);
+				return jurl_geterror(
+					curl_easy_setopt(jurl->handle, opt->opt, NULL
+					));
 			} else {
-				curl_easy_setopt(jurl->handle, opt->opt, janet_getcstring(argv, 2));
+				return jurl_geterror(
+					curl_easy_setopt(jurl->handle, opt->opt, janet_getcstring(argv, 2)
+					));
 			}
 			break;
 		case JURL_PARAMTYPE_FILE:
-			curl_easy_setopt(jurl->handle, opt->opt, janet_getjfile(argv, 2));
+			return jurl_geterror(
+				curl_easy_setopt(jurl->handle, opt->opt, janet_getjfile(argv, 2)
+				));
 			break;
 		case JURL_PARAMTYPE_SLIST: {
 			// we register the cleanup ahead of time, because...
@@ -359,19 +373,25 @@ JANET_CFUN(jurl_setopt) {
 				}
 				clean->slist = newlist;
 			}
-			curl_easy_setopt(jurl->handle, opt->opt, clean->slist);
+			return jurl_geterror(
+				curl_easy_setopt(jurl->handle, opt->opt, clean->slist
+				));
 			break;
 		}
 		case JURL_PARAMTYPE_ENUM:
-			jurl_setenum(jurl, opt->opt, argv[2]);
+			return jurl_geterror(
+				jurl_setenum(jurl, opt->opt, argv[2]
+				));
 			break;
 		case JURL_PARAMTYPE_CALLBACK:
 			// callbacks are complex and need individual handling
-			jurl_setcallback(jurl, opt->opt, janet_getfunction(argv, 2));
+			return jurl_geterror(
+				jurl_setcallback(jurl, opt->opt, janet_getfunction(argv, 2)
+				));
 			break;
 		default:
 			janet_panic("jurl_setopt: unrecognized param type");
 	}
 
-	return janet_wrap_abstract(jurl);
+	return janet_wrap_nil(); // unreachable
 }

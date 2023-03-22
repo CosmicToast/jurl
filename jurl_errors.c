@@ -133,7 +133,7 @@ JANET_CFUN(jurl_strerror) {
 			}
 			break;
 		case JANET_TFLAG_NUMBER:
-			code = janet_getinteger64(argv, 0); // take advantage of the macro check rather than arg
+			code = janet_unwrap_integer(arg);
 			break;
 		default:
 			janet_panicf("expected keyword or number in jurl_strerror, got %T", janet_type(arg));

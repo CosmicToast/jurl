@@ -26,6 +26,7 @@ JANET_CFUN(jurl_new);
 JANET_CFUN(jurl_reset);
 JANET_CFUN(jurl_dup);
 JANET_CFUN(jurl_perform);
+JANET_CFUN(jurl_wrap_error);
 jurl_handle *janet_getjurl(Janet *argv, int32_t n);
 
 // jurl_callbacks.c

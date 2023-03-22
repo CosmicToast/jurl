@@ -33,11 +33,17 @@ JANET_FN(jurl_perform,
 		"(jurl-native/perform handle)",
 		"Perform the request associated with a handle");
 
-// jurl_errors.c
-JANET_FN(jurl_geterror,
-		"(jurl-native/geterror :error/write-error)"
+JANET_FN(jurl_wrap_error,
+		"(jurl-native/wrap-error :ok body)"
 		"\n"
-		"(jurl-native/geterror 1234)",
+		"(jurl-native/wrap-error :err _)",
+		"Boxes an :ok signal with a body, else the error with its explanation in string form");
+
+// jurl_errors.c
+JANET_FN(jurl_strerror,
+		"(jurl-native/strerror :error/write-error)"
+		"\n"
+		"(jurl-native/strerror 1234)",
 		"Get an explanation string about a jurl error");
 
 // jurl_getinfo.c
@@ -62,9 +68,10 @@ static const JanetRegExt cfuns[] = {
 	JANET_REG("global-init", jurl_global_init),
 	JANET_REG("global-cleanup", jurl_global_cleanup),
 	JANET_REG("perform", jurl_perform),
+	JANET_REG("wrap-error", jurl_wrap_error),
 
 	// jurl_errors.c
-	JANET_REG("geterror", jurl_geterror),
+	JANET_REG("strerror", jurl_strerror),
 
 	// jurl_getinfo.c
 	JANET_REG("getinfo", jurl_getinfo),

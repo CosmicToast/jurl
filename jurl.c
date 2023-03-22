@@ -30,14 +30,31 @@ jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
 	return (jurl_handle*)janet_getabstract(argv, n, &jurl_type);
 }
 
+// this function plays fast and loose and I hope the gc doesn't kill me for it
+// anyway, it goes like so:
+// (wrap-error :ok  something) -> [:ok something]
+// (wrap-error :err something) -> [:err "explanation of :err"]
+JANET_CFUN(jurl_wrap_error) {
+	janet_fixarity(argc, 2);
+	CURLcode code;
+	if (janet_checktype(argv[0], JANET_NUMBER)) {
+		argv[0] = jurl_geterror(janet_getinteger(argv, 0));
+	}
+	if (!janet_checktype(argv[0], JANET_KEYWORD)) {
+		janet_panicf("jurl_wrap_error: expected number or keyword, got %T", janet_type(argv[0]));
+	}
+	if (!janet_keyeq(argv[0], "ok")) {
+		// will this break one day?
+		// find out next time!
+		argv[1] = jurl_strerror(1, argv);
+	}
+	return janet_wrap_tuple(janet_tuple_n(argv, 2));
+}
+
 JANET_CFUN(jurl_new) {
 	janet_fixarity(argc, 0);
 	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
 	jurl->handle = curl_easy_init();
-
-	// EXAMPLE
-	curl_easy_setopt(jurl->handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
-
 	return janet_wrap_abstract(jurl);
 }
 
@@ -92,7 +109,7 @@ JANET_CFUN(jurl_global_init) {
 		}
 	}
 global_init_ret:
-	return janet_wrap_integer(curl_global_init(flags));
+	return jurl_geterror(curl_global_init(flags));
 }
 
 JANET_CFUN(jurl_global_cleanup) {
@@ -100,15 +117,8 @@ JANET_CFUN(jurl_global_cleanup) {
 	return janet_wrap_nil();
 }
 
-size_t write_buffer_callback(void *contents, size_t size, size_t nmemb, void* userp) {
-	size_t realsize = size * nmemb;
-	janet_buffer_push_bytes(userp, contents, realsize);
-	return realsize;
-}
-
 JANET_CFUN(jurl_perform) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getjurl(argv, 0);
-	CURLcode res = curl_easy_perform(jurl->handle);
-	return janet_wrap_boolean(res == CURLE_OK);
+	return jurl_geterror(curl_easy_perform(jurl->handle));
 }
