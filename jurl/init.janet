@@ -26,12 +26,13 @@
 # the latter being preferrable for anyone building their own wrapper
 # it's intended for relatively low level use, but still usable directly
 # the primary purpose is to allow options to be persisted
+# the main disadvantage is you can no longer use get for getinfo and put for setopt
 (def Simple @{:type "JurlSimpleClient"
               # make sure to set:
               # :handle; output of native/new
               # :options; optional, same as *default-options* but client-specific
               
-              :getinfo |(:getinfo ($ :handle) $1)
+              :getinfo |(get ($ :handle) $1)
               :perform (fn [$ &opt opts]
                          (when opts (apply-opts ($ :handle) opts))
                          (:perform ($ :handle))
@@ -42,7 +43,7 @@
                        $)
               :setopt (fn [$ k v]
                         (put ($ :options) k v)
-                        (:setopt ($ :handle) k v)
+                        (put ($ :handle)  k v)
                         $)})
 
 (defn new-simple
