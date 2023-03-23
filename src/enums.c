@@ -169,11 +169,11 @@ static const struct jurl_enum jurl_enums[] = {
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_KEYBOARD,  "ssh-auth/keyboard"},
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_AGENT,     "ssh-auth/agent"},
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_ANY,       "ssh-auth/any"},
+	{0, 0, NULL},
 };
-#define jurl_enum_size (sizeof(jurl_enums) / sizeof(struct jurl_enum))
 
 static long get_eq(CURLoption opt, JanetKeyword kw) {
-	for (size_t i = 0; i < jurl_enum_size; i++) {
+	for (size_t i = 0; jurl_enums[i].keyword; i++) {
 		if (jurl_enums[i].opt == opt && !strcmp(jurl_enums[i].keyword, (const char*)kw)) {
 			return jurl_enums[i].value;
 		}
