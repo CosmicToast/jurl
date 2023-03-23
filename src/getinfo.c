@@ -86,7 +86,6 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLINFO_RTSP_CSEQ_RECV,            "rtsp-cseq-recv",          JURL_PARAMTYPE_LONG},
 	// SKIP: protocol: deprecated for scheme
 	{CURLINFO_SCHEME,                    "scheme",                  JURL_PARAMTYPE_STRING},
-	{0, NULL, 0},
 };
 
 JANET_CFUN(jurl_getinfo) {
@@ -96,7 +95,7 @@ JANET_CFUN(jurl_getinfo) {
 
 	const struct jurl_opt *opt;
 	Janet jopt = argv[1];
-	for (size_t i = 0; jurl_opts[i].keyword; i++) {
+	for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
 		if(janet_keyeq(jopt, jurl_opts[i].keyword)) {
 			opt = &jurl_opts[i];
 			break;
@@ -104,7 +103,7 @@ JANET_CFUN(jurl_getinfo) {
 	}
 	if (!opt) {
 		int num = janet_getinteger(argv, 1);
-		for (size_t i = 0; jurl_opts[i].keyword; i++) {
+		for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
 			if (num == jurl_opts[i].info) {
 				opt = &jurl_opts[i];
 				break;

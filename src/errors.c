@@ -105,12 +105,12 @@ static const struct jurl_error jurl_errors[] = {
 	{CURLE_PROXY,                    "error/proxy"},
 	{CURLE_SSL_CLIENTCERT,           "error/ssl-clientcert"},
 	{CURLE_UNRECOVERABLE_POLL,       "error/unrecoverable-poll"},
-	{0, NULL},
 };
+#define jurl_error_size (sizeof(jurl_errors) / sizeof(struct jurl_error))
 
 // translate a CURLcode return code into a keyword
 Janet jurl_geterror(CURLcode code) {
-	for (size_t i = 0; jurl_errors[i].keyword; i++) {
+	for (size_t i = 0; i < jurl_error_size; i++) {
 		if (jurl_errors[i].code == code) {
 			return janet_ckeywordv(jurl_errors[i].keyword);
 		}
@@ -125,7 +125,7 @@ JANET_CFUN(jurl_strerror) {
 	Janet arg = argv[0];
 	switch (janet_checktypes(arg, JANET_TFLAG_KEYWORD | JANET_TFLAG_NUMBER)) {
 		case JANET_TFLAG_KEYWORD:
-			for (size_t i = 0; jurl_errors[i].keyword; i++) {
+			for (size_t i = 0; i < jurl_error_size; i++) {
 				if (janet_keyeq(arg, jurl_errors[i].keyword)) {
 					code = jurl_errors[i].code;
 					break;

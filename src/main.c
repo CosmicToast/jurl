@@ -152,7 +152,6 @@ static const JanetRegExt cfuns[] = {
 
 	// jurl_setopt.c
 	JANET_REG("setopt", jurl_setopt),
-	JANET_REG_END,
 };
 
 JANET_MODULE_ENTRY(JanetTable *env) {
