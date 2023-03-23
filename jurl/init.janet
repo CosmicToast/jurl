@@ -1,11 +1,11 @@
-(import jurl-native)
+(import jurl/native)
 
 # = global init
 
 # global init on import
-(let [g (jurl-native/global-init)]
+(let [g (native/global-init)]
   (when (not= :ok g)
-    (error (jurl-native/strerror g))))
+    (error (native/strerror g))))
 
 # = simple client
 
@@ -28,7 +28,7 @@
 # the primary purpose is to allow options to be persisted
 (def Simple @{:type "JurlSimpleClient"
               # make sure to set:
-              # :handle; output of jurl-native/new
+              # :handle; output of native/new
               # :options; optional, same as *default-options* but client-specific
               
               :getinfo |(:getinfo ($ :handle) $1)
@@ -47,7 +47,7 @@
 
 (defn new-simple
   [&opt opts &named handle]
-  (default handle (jurl-native/new))
+  (default handle (native/new))
   (default opts @{})
   (-> @{:handle handle
         :options opts}
