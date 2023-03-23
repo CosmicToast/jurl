@@ -44,5 +44,25 @@ JANET_CFUN(jurl_strerror);
 // jurl_getinfo.c
 JANET_CFUN(jurl_getinfo);
 
+// jurl_mime.c
+struct jurl_mime {
+	CURL *curl;
+	curl_mime *handle;
+	int clean;
+};
+typedef struct jurl_mime jurl_mime;
+JANET_CFUN(jurl_mime_new);
+JANET_CFUN(jurl_mime_addpart);
+JANET_CFUN(jurl_mime_name);
+JANET_CFUN(jurl_mime_data);
+JANET_CFUN(jurl_mime_data_cb);
+JANET_CFUN(jurl_mime_filedata);
+JANET_CFUN(jurl_mime_filename);
+JANET_CFUN(jurl_mime_type);
+JANET_CFUN(jurl_mime_headers);
+JANET_CFUN(jurl_mime_encoder);
+JANET_CFUN(jurl_mime_subparts);
+jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
+
 // jurl_setopt.c
 JANET_CFUN(jurl_setopt);

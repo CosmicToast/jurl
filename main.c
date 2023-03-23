@@ -61,6 +61,57 @@ JANET_FN(jurl_getinfo,
 		"(jurl-native/getinfo handle 1234)",
 		"Get a curl info from handle");
 
+// jurl_mime.c
+JANET_FN(jurl_mime_new,
+		"(jurl-native/mime-new)",
+		"Create a new mime form");
+
+JANET_FN(jurl_mime_addpart,
+		"(jurl-native/mime-addpart mime)"
+		"\n"
+		"(:addpart mime)",
+		"Add a part to a mime form");
+
+JANET_FN(jurl_mime_name,
+		"(jurl-native/mime-name part string)",
+		"Set a name for the mimepart");
+
+JANET_FN(jurl_mime_data,
+		"(jurl-native/mime-data part string)"
+		"\n"
+		"(jurl-native/mime-data part buffer)",
+		"Set a string or buffer as the data source for the mimepart");
+
+JANET_FN(jurl_mime_data_cb,
+		"(jurl-native/mime-data-cb part (fn ...))",
+		"Set a callback as the data source for the mimepart");
+
+JANET_FN(jurl_mime_filedata,
+		"(jurl-native/mime-filedata part \"local.file\")",
+		"Set a file as the data source for the mimepart");
+
+JANET_FN(jurl_mime_filename,
+		"(jurl-native/mime-filename part \"remote.file\")",
+		"Set a custom remote filename for the upload mimepart");
+
+JANET_FN(jurl_mime_type,
+		"(jurl-native/mime-type part \"image/png\")",
+		"Set a custom mimetype for the mimepart");
+
+JANET_FN(jurl_mime_headers,
+		"(jurl-native/mime-headers part [headers...])",
+		"Set custom headers for the mimepart");
+
+JANET_FN(jurl_mime_encoder,
+		"(jurl-native/mime-encoder part :encoder)",
+		"Set a part to be encoded using :encoder.\n"
+		"Available encoders are:\n"
+		":binary :8bit :7bit :base64 :quoted-printable");
+
+JANET_FN(jurl_mime_subparts,
+		"(jurl-native/mime-attach mime part)",
+		"Attach mime to part as a subpart mime");
+
 // jurl_setopt.c
 JANET_FN(jurl_setopt,
 		"(jurl-native/setopt handle :option value)"
@@ -85,6 +136,19 @@ static const JanetRegExt cfuns[] = {
 
 	// jurl_getinfo.c
 	JANET_REG("getinfo", jurl_getinfo),
+
+	// jurl_mime.c
+	JANET_REG("mime-new", jurl_mime_new),
+	JANET_REG("mime-addpart", jurl_mime_addpart),
+	JANET_REG("mime-name", jurl_mime_name),
+	JANET_REG("mime-data", jurl_mime_data),
+	JANET_REG("mime-data-cb", jurl_mime_data_cb),
+	JANET_REG("mime-filedata", jurl_mime_filedata),
+	JANET_REG("mime-filename", jurl_mime_filename),
+	JANET_REG("mime-type", jurl_mime_type),
+	JANET_REG("mime-headers", jurl_mime_headers),
+	JANET_REG("mime-encoder", jurl_mime_encoder),
+	JANET_REG("mime-attach", jurl_mime_subparts),
 
 	// jurl_setopt.c
 	JANET_REG("setopt", jurl_setopt),
