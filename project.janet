@@ -10,4 +10,4 @@
   :source ["main.c" "jurl.c" "jurl_callbacks.c" "jurl_enums.c" "jurl_errors.c" "jurl_getinfo.c" "jurl_setopt.c"])
 
 (declare-source
-  :source "jurl.janet")
+  :source ["jurl"])
