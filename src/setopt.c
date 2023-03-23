@@ -9,6 +9,7 @@ enum jurl_paramtype {
 	JURL_PARAMTYPE_ENUM,
 	JURL_PARAMTYPE_OFF_T,
 	JURL_PARAMTYPE_CALLBACK,
+	JURL_PARAMTYPE_MIME,
 };
 struct jurl_opt {
 	CURLoption opt;
@@ -226,7 +227,7 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_INFILESIZE_LARGE,    "infilesize-large",    JURL_PARAMTYPE_OFF_T},
 	{CURLOPT_UPLOAD,              "upload",              JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_UPLOAD_BUFFERSIZE,   "upload-buffersize",   JURL_PARAMTYPE_LONG},
-	// TODO: mimepost
+	{CURLOPT_MIMEPOST,            "mimepost",            JURL_PARAMTYPE_MIME},
 	{CURLOPT_MIME_OPTIONS,        "mime-options",        JURL_PARAMTYPE_ENUM},
 	{CURLOPT_MAXFILESIZE,         "maxfilesize",         JURL_PARAMTYPE_LONG},
 	{CURLOPT_MAXFILESIZE_LARGE,   "maxfilesize-large",   JURL_PARAMTYPE_OFF_T},
@@ -387,6 +388,11 @@ JANET_CFUN(jurl_setopt) {
 			// callbacks are complex and need individual handling
 			return jurl_geterror(
 				jurl_setcallback(jurl, opt->opt, janet_getfunction(argv, 2)
+				));
+			break;
+		case JURL_PARAMTYPE_MIME:
+			return jurl_geterror(
+				curl_easy_setopt(jurl->handle, opt->opt, janet_getjurlmime(argv, 2)
 				));
 			break;
 		default:
