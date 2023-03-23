@@ -116,6 +116,53 @@ static const struct jurl_enum jurl_enums[] = {
 	{CURLOPT_USE_SSL, CURLUSESSL_CONTROL, "usessl/control"},
 	{CURLOPT_USE_SSL, CURLUSESSL_ALL,     "usessl/all"},
 
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT,     "sslversion/default"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1,       "sslversion/tlsv1"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_SSLv2,       "sslversion/sslv2"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_SSLv3,       "sslversion/sslv3"},
+#if CURL_AT_LEAST_VERSION(7,34,0)
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_0,     "sslversion/tlsv1.0"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_1,     "sslversion/tlsv1.1"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2,     "sslversion/tlsv1.2"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,52,0)
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3,     "sslversion/tlsv1.3"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,54,0)
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_DEFAULT, "sslversion/max-default"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_TLSv1_0, "sslversion/max-tlsv1.0"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_TLSv1_1, "sslversion/max-tlsv1.1"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_TLSv1_2, "sslversion/max-tlsv1.2"},
+	{CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_TLSv1_3, "sslversion/max-tlsv1.3"},
+#endif
+
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_ALLOW_BEAST,        "sslopt/allow-beast"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_ALLOW_BEAST,        "sslopt/allow-beast"},
+#if CURL_AT_LEAST_VERSION(7,44,0)
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_NO_REVOKE,          "sslopt/no-revoke"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE,          "sslopt/no-revoke"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,68,0)
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_NO_PARTIALCHAIN,    "sslopt/no-partialchain"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_NO_PARTIALCHAIN,    "sslopt/no-partialchain"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,70,0)
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_REVOKE_BEST_EFFORT, "sslopt/revoke-best-effort"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_REVOKE_BEST_EFFORT, "sslopt/revoke-best-effort"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,71,0)
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_NATIVE_CA,          "sslopt/native-ca"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA,          "sslopt/native-ca"},
+#endif
+#if CURL_AT_LEAST_VERSION(7,77,0)
+	{CURLOPT_SSL_OPTIONS,       CURLSSLOPT_AUTO_CLIENT_CERT,   "sslopt/auto-client-cert"},
+	{CURLOPT_PROXY_SSL_OPTIONS, CURLSSLOPT_AUTO_CLIENT_CERT,   "sslopt/auto-client-cert"},
+#endif
+
+	{CURLOPT_GSSAPI_DELEGATION, CURLGSSAPI_DELEGATION_NONE,        "gssapi-delegation/none"},
+	{CURLOPT_GSSAPI_DELEGATION, CURLGSSAPI_DELEGATION_FLAG,        "gssapi-delegation/flag"},
+	{CURLOPT_GSSAPI_DELEGATION, CURLGSSAPI_DELEGATION_POLICY_FLAG, "gssapi-delegation/policy-flag"},
+
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PUBLICKEY, "ssh-auth/publickey"},
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD,  "ssh-auth/password"},
 	{CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_HOST,      "ssh-auth/host"},

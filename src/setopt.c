@@ -263,7 +263,64 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_UPKEEP_INTERVAL_MS,        "upkeep-interval-ms",        JURL_PARAMTYPE_LONG},
 
 	// * ssl and security options
-	// TODO: holy shit it's long and I'm bored
+	{CURLOPT_SSLCERT,               "sslcert",               JURL_PARAMTYPE_STRING},
+	// TODO: sslcert-blob: curl_blob
+	{CURLOPT_PROXY_SSLCERT,         "proxy-sslcert",         JURL_PARAMTYPE_STRING},
+	// TODO: proxy-sslcert-blob: curl_blob
+	{CURLOPT_SSLCERTTYPE,           "sslcerttype",           JURL_PARAMTYPE_STRING}, // not type checked, PEM|DER|P12
+	{CURLOPT_PROXY_SSLCERTTYPE,     "proxy-sslcerttype",     JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSLKEY,                "sslkey",                JURL_PARAMTYPE_STRING},
+	// TODO: sslkey-blob: curl_blob
+	{CURLOPT_PROXY_SSLKEY,          "proxy-sslkey",          JURL_PARAMTYPE_STRING},
+	// TODO: proxy-sslkey-blob: curl_blob
+	{CURLOPT_SSLKEYTYPE,            "sslkeytype",            JURL_PARAMTYPE_STRING}, // PEM|DER|ENG
+	{CURLOPT_PROXY_SSLKEYTYPE,      "proxy-sslkeytype",      JURL_PARAMTYPE_STRING},
+	{CURLOPT_KEYPASSWD,             "keypasswd",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_KEYPASSWD,       "proxy-keypasswd",       JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSL_EC_CURVES,         "ssl-ec-curves",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSL_ENABLE_ALPN,       "ssl-enable-alpn",       JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSL_ENABLE_NPN,        "ssl-enable-npn",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSLENGINE,             "sslengine",             JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSLENGINE_DEFAULT,     "sslengine-default",     JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSL_FALSESTART,        "ssl-falsestart",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSLVERSION,            "sslversion",            JURL_PARAMTYPE_ENUM},   // you can only set one min one max
+	{CURLOPT_SSL_VERIFYHOST,        "ssl-verifyhost",        JURL_PARAMTYPE_LONG},
+	{CURLOPT_DOH_SSL_VERIFYHOST,    "doh-ssl-verifyhost",    JURL_PARAMTYPE_LONG},
+	{CURLOPT_PROXY_SSL_VERIFYHOST,  "proxy-ssl-verifyhost",  JURL_PARAMTYPE_LONG},
+	{CURLOPT_SSL_VERIFYPEER,        "ssl-verifypeer",        JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_DOH_SSL_VERIFYPEER,    "doh-ssl-verifypeer",    JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_PROXY_SSL_VERIFYPEER,  "proxy-ssl-verifypeer",  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSL_VERIFYSTATUS,      "ssl-verifystatus",      JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_DOH_SSL_VERIFYSTATUS,  "doh-ssl-verifystatus",  JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_CAINFO,                "cainfo",                JURL_PARAMTYPE_STRING},
+	// TODO: cainfo-blob: curl_blob
+	{CURLOPT_PROXY_CAINFO,          "proxy-cainfo",          JURL_PARAMTYPE_STRING},
+	// TODO: proxy-cainfo-blob: curl_blob
+	{CURLOPT_ISSUERCERT,            "issuercert",            JURL_PARAMTYPE_STRING},
+	// TODO: issuercert-blob: curl_blob
+	{CURLOPT_PROXY_ISSUERCERT,      "proxy-issuercert",      JURL_PARAMTYPE_STRING},
+	// TODO: proxy-issuercert-blob: curl_blob
+	{CURLOPT_CAPATH,                "capath",                JURL_PARAMTYPE_STRING}, // this is important for static linking
+	{CURLOPT_PROXY_CAPATH,          "proxy-capath",          JURL_PARAMTYPE_STRING},
+	{CURLOPT_CRLFILE,               "crlfile",               JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_CRLFILE,         "proxy-crlfile",         JURL_PARAMTYPE_STRING},
+#if CURL_AT_LEAST_VERSION(7,87,0)
+	{CURLOPT_CA_CACHE_TIMEOUT,      "ca-cache-timeout",      JURL_PARAMTYPE_LONG},
+#endif
+	{CURLOPT_CERTINFO,              "certinfo",              JURL_PARAMTYPE_LONG},
+	{CURLOPT_PINNEDPUBLICKEY,       "pinnedpublickey",       JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_PINNEDPUBLICKEY, "proxy-pinnedpublickey", JURL_PARAMTYPE_STRING},
+	// SKIP: random-file: deprecated
+	// SKIP: edgsocket: deprecated
+	{CURLOPT_SSL_CIPHER_LIST,       "ssl-cipher-list",       JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_SSL_CIPHER_LIST, "proxy-ssl-cipher-list", JURL_PARAMTYPE_STRING},
+	{CURLOPT_TLS13_CIPHERS,         "tls13-ciphers",         JURL_PARAMTYPE_STRING},
+	{CURLOPT_PROXY_TLS13_CIPHERS,   "proxy-tls13-ciphers",   JURL_PARAMTYPE_STRING},
+	{CURLOPT_SSL_SESSIONID_CACHE,   "ssl-sessionid-cache",   JURL_PARAMTYPE_BOOLEAN},
+	{CURLOPT_SSL_OPTIONS,           "ssl-options",           JURL_PARAMTYPE_ENUM},
+	{CURLOPT_PROXY_SSL_OPTIONS,     "proxy-ssl-options",     JURL_PARAMTYPE_ENUM},
+	{CURLOPT_KRBLEVEL,              "krblevel",              JURL_PARAMTYPE_STRING}, // clear|safe|confidential|private
+	{CURLOPT_GSSAPI_DELEGATION,     "gssapi-delegation",     JURL_PARAMTYPE_ENUM},
 
 	// * ssh options
 	{CURLOPT_SSH_AUTH_TYPES,             "ssh-auth-types",             JURL_PARAMTYPE_ENUM},
