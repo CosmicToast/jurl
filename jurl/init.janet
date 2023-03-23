@@ -27,22 +27,23 @@
 # it's intended for relatively low level use, but still usable directly
 # the primary purpose is to allow options to be persisted
 (def Simple @{:type "JurlSimpleClient"
-               :handle  nil # don't forget to populate
-               :options nil # don't forget to populate
-               
-               :getinfo |(:getinfo ($ :handle) $1)
-               :perform (fn [s &opt opts]
-                          (when opts (apply-opts (s :handle) opts))
-                          (:perform (s :handle))
-                          s)
-               :reset (fn [s]
-                        (:reset (s :handle))
-                        (apply-opts (s :handle) (merge *default-options* (s :options)))
-                        s)
-               :setopt (fn [s k v]
-                         (put (s :options) k v)
-                         (:setopt (s :handle) k v)
-                         s)})
+              # make sure to set:
+              # :handle; output of jurl-native/new
+              # :options; optional, same as *default-options* but client-specific
+              
+              :getinfo |(:getinfo ($ :handle) $1)
+              :perform (fn [$ &opt opts]
+                         (when opts (apply-opts ($ :handle) opts))
+                         (:perform ($ :handle))
+                         $)
+              :reset (fn [$]
+                       (:reset ($ :handle))
+                       (apply-opts ($ :handle) (merge *default-options* ($ :options)))
+                       $)
+              :setopt (fn [$ k v]
+                        (put ($ :options) k v)
+                        (:setopt ($ :handle) k v)
+                        $)})
 
 (defn new-simple
   [&opt opts &named handle]
