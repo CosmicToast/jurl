@@ -132,7 +132,7 @@ JANET_CFUN(jurl_unescape) {
 
 JANET_CFUN(jurl_new) {
 	janet_fixarity(argc, 0);
-	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
+	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl_handle));
 	jurl->handle = curl_easy_init();
 	return janet_wrap_abstract(jurl);
 }
