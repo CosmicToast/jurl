@@ -1,7 +1,7 @@
 // jurl.c - a curl_easy minimal wrapper for janet
 #include "jurl.h"
 
-int jurl_gc(void *p, size_t s) {
+static int jurl_gc(void *p, size_t s) {
 	(void) s;
 	jurl_handle *jurl = (jurl_handle*)p;
 	if (jurl->handle) curl_easy_cleanup(jurl->handle);
@@ -37,7 +37,7 @@ static int jurl_get(void *p, Janet key, Janet *out) {
 	return janet_getmethod(janet_unwrap_keyword(key), jurl_methods, out);
 }
 
-const JanetAbstractType jurl_type = {
+static const JanetAbstractType jurl_type = {
 	"jurl",       // name
 	jurl_gc,      // gc
 	NULL,		  // gcmark
@@ -68,6 +68,43 @@ JANET_CFUN(jurl_wrap_error) {
 		argv[1] = jurl_strerror(1, argv);
 	}
 	return janet_wrap_tuple(janet_tuple_n(argv, 2));
+}
+
+JANET_CFUN(jurl_escape) {
+	janet_fixarity(argc, 1);
+	JanetByteView b = janet_getbytes(argv, 0);
+	CURL* curl;
+#if !CURL_AT_LEAST_VERSION(7,82,0)
+	curl = curl_easy_init();
+#endif
+
+	char *s = curl_easy_escape(curl, (const char*)b.bytes, b.len);
+	Janet out = janet_cstringv(s);
+
+	curl_free(s);
+#if !CURL_AT_LEAST_VERSION(7,82,0)
+	curl_easy_cleanup(curl);
+#endif
+	return out;
+}
+
+JANET_CFUN(jurl_unescape) {
+	janet_fixarity(argc, 1);
+	JanetByteView b = janet_getbytes(argv, 0);
+	CURL *curl;
+#if !CURL_AT_LEAST_VERSION(7,82,0)
+	curl = curl_easy_init();
+#endif
+
+	int len;
+	char *s = curl_easy_unescape(curl, (const char*)b.bytes, b.len, &len);
+	Janet out = janet_stringv((const uint8_t*)s, len);
+
+	curl_free(s);
+#if !CURL_AT_LEAST_VERSION(7,82,0)
+	curl_easy_cleanup(curl);
+#endif
+	return out;
 }
 
 JANET_CFUN(jurl_new) {

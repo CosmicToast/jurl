@@ -7,6 +7,14 @@
 #define JANET_FN JANET_FN_D
 
 // jurl.c
+JANET_FN(jurl_escape,
+		"(jurl-native/escape string)",
+		"Returns URL-encoded version of string");
+
+JANET_FN(jurl_unescape,
+		"(jurl-native/unescape string)",
+		"Return URL-decoded version of string");
+
 JANET_FN(jurl_new,
 		"(jurl-native/new)",
 		"Create new jurl handle");
@@ -62,6 +70,8 @@ JANET_FN(jurl_setopt,
 
 static const JanetRegExt cfuns[] = {
 	// jurl.c
+	JANET_REG("escape", jurl_escape),
+	JANET_REG("unescape", jurl_unescape),
 	JANET_REG("new", jurl_new),
 	JANET_REG("reset", jurl_reset),
 	JANET_REG("dup", jurl_dup),

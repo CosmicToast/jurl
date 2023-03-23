@@ -22,6 +22,8 @@ typedef struct jurl_handle jurl_handle;
 
 // jurl.c
 struct jurl_cleanup *register_cleanup(jurl_handle *jurl, enum jurl_cleanup_type type);
+JANET_CFUN(jurl_escape);
+JANET_CFUN(jurl_unescape);
 JANET_CFUN(jurl_new);
 JANET_CFUN(jurl_reset);
 JANET_CFUN(jurl_dup);
