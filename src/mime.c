@@ -77,10 +77,70 @@ JANET_CFUN(jurl_mime_data) {
 	return jurl_geterror(ret);
 }
 
-// TODO
+static size_t readfunc(char *buffer, size_t size, size_t nitems, void *arg) {
+	JanetFunction *fun = (JanetFunction*)arg;
+	size_t realsize = size * nitems;
+
+	Janet argv[2] = { janet_ckeywordv("read"),
+					  janet_wrap_integer(realsize), };
+	Janet res = janet_call(fun, 2, argv);
+	if (janet_checktype(res, JANET_NIL)) return 0;
+	JanetByteView bytes;
+	if (!janet_bytes_view(res, &bytes.bytes, &bytes.len)) {
+		janet_panic("could not open bytesview in readfunc");
+	}
+
+	size_t actualsize = realsize > bytes.len ? bytes.len : realsize;
+	memcpy(buffer, bytes.bytes, actualsize);
+
+	return realsize;
+}
+
+static int seekfunc(void *arg, curl_off_t offset, int origin) {
+	JanetFunction *fun = (JanetFunction*)arg;
+	char *pos;
+	switch (origin) {
+	case SEEK_SET:
+		pos = "set";
+		break;
+	case SEEK_CUR:
+		pos = "cur";
+		break;
+	case SEEK_END:
+		pos = "end";
+		break;
+	default:
+		janet_panicf("unrecognized origin in seekfunc: %d", origin);
+	}
+
+	Janet argv[3] = { janet_ckeywordv("seek"), 
+					  janet_wrap_integer(offset),
+					  janet_ckeywordv(pos), };
+	Janet res = janet_call(fun, 3, argv);
+
+	if        (janet_keyeq(res, "ok")) {
+		return CURL_SEEKFUNC_OK;
+	} else if (janet_keyeq(res, "fail")) {
+		return CURL_SEEKFUNC_FAIL;
+	} else if (janet_keyeq(res, "cantseek")) {
+		return CURL_SEEKFUNC_CANTSEEK;
+	} else {
+		janet_panicf("unrecognized return in seekfunc: %v", res);
+	}
+
+	return CURL_SEEKFUNC_CANTSEEK; // unreachable
+}
+
+// (callback :read size)
+// (callback :seek offset :set | :cur | :end)
 JANET_CFUN(jurl_mime_data_cb) {
-	janet_panic("not implemented");
-	return janet_wrap_nil(); // unreachable
+	janet_fixarity(argc, 3);
+	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	curl_off_t size = janet_getinteger64(argv, 1);
+	JanetFunction *fun = janet_getfunction(argv, 2);
+
+	CURLcode res = curl_mime_data_cb(part, size, readfunc, seekfunc, NULL, fun);
+	return jurl_geterror(res);
 }
 
 JANET_CFUN(jurl_mime_filedata) {

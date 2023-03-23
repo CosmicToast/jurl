@@ -83,7 +83,7 @@ JANET_FN(jurl_mime_data,
 		"Set a string or buffer as the data source for the mimepart");
 
 JANET_FN(jurl_mime_data_cb,
-		"(mime-data-cb part (fn ...))",
+		"(mime-data-cb part datasize (fn [mode size|offset &opt position]))",
 		"Set a callback as the data source for the mimepart");
 
 JANET_FN(jurl_mime_filedata,

@@ -18,11 +18,12 @@
            :encoder  encoder}]
   (some-do handle name     native/mime-name)
   (some-do handle data     native/mime-data)
-  (some-do handle data-cb  native/mime-data-cb)
   (some-do handle filedata native/mime-filedata)
   (some-do handle filename native/mime-filename)
   (some-do handle mimetype native/mime-type)
   (some-do handle encoder  native/mime-encoder)
+  (when (some? data-cb)
+    (native/mime-data-cb handle ;data-cb))
   (when (some? amime)
     (:attach amime handle))
   (when (some? headers)
