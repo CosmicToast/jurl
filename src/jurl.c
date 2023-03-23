@@ -29,12 +29,34 @@ static JanetMethod jurl_methods[] = {
 	{NULL,      NULL},
 };
 
+// methods + getinfo
 static int jurl_get(void *p, Janet key, Janet *out) {
-	(void) p;
+	jurl_handle *jurl = (jurl_handle*)p;
 	if (!janet_checktype(key, JANET_KEYWORD)) {
 		return 0;
 	}
-	return janet_getmethod(janet_unwrap_keyword(key), jurl_methods, out);
+
+	// is it a method?
+	if (janet_getmethod(janet_unwrap_keyword(key), jurl_methods, out)) {
+		return 1;
+	}
+
+	// try to do a getinfo
+	Janet argv[2] = { janet_wrap_abstract(jurl),
+					  key, };
+	*out = jurl_getinfo(2, argv);
+	return 1;
+}
+
+// setopt
+static void jurl_put(void *data, Janet key, Janet value) {
+	jurl_handle *jurl = (jurl_handle*)data;
+	Janet argv[3] = { janet_wrap_abstract(jurl),
+					  key, value, };
+	Janet out = jurl_setopt(3, argv);
+	if (!janet_keyeq(out, "ok")) {
+		janet_panic("jurl_put failed");
+	}
 }
 
 static const JanetAbstractType jurl_type = {
@@ -42,7 +64,8 @@ static const JanetAbstractType jurl_type = {
 	jurl_gc,      // gc
 	NULL,		  // gcmark
 	jurl_get,     // get
-	JANET_ATEND_GET
+	jurl_put,	  // put
+	JANET_ATEND_PUT
 };
 
 jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
