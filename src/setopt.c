@@ -447,7 +447,7 @@ JANET_CFUN(jurl_setopt) {
 			JanetByteView bytes = janet_getbytes(argv, 2);
 			struct curl_blob blob;
 			blob.flags = CURL_BLOB_COPY;
-			blob.data  = bytes.bytes;
+			blob.data  = (void*)bytes.bytes;
 			blob.len   = bytes.len;
 			return jurl_geterror(
 				curl_easy_setopt(jurl->handle, opt->opt, &blob
