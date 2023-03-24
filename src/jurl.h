@@ -26,7 +26,6 @@ typedef struct jurl_handle jurl_handle;
 
 // mime.c
 struct jurl_mime {
-	CURL *curl;
 	curl_mime *mime;
 	int clean;
 };

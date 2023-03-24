@@ -12,7 +12,6 @@ static int jurl_mime_gc(void *p, size_t s) {
 	(void) s;
 	jurl_mime *mime = (jurl_mime*)p;
 	if (mime->clean) curl_mime_free(mime->mime);
-	curl_easy_cleanup(mime->curl);
 	return 0;
 }
 
@@ -86,11 +85,11 @@ JANET_CFUN(jurl_mime_addpart) {
 
 // we generate a separate handle for the generation, it's used a lot
 JANET_CFUN(jurl_mime_new) {
-	janet_fixarity(argc, 0);
-	jurl_mime *mime = (jurl_mime*)janet_abstract(&jurl_mimetype, sizeof(jurl_mime));
+	janet_fixarity(argc, 1);
+	jurl_mime   *mime = (jurl_mime*)janet_abstract(&jurl_mimetype, sizeof(jurl_mime));
+	jurl_handle *jurl = (jurl_handle*)janet_getjurl(argv, 0);
 	mime->clean = 1; // clean by default
-	mime->curl  = curl_easy_init();
-	mime->mime  = curl_mime_init(mime->curl);
+	mime->mime  = curl_mime_init(jurl->handle);
 	return janet_wrap_abstract(mime);
 }
 
