@@ -83,7 +83,8 @@ JANET_CFUN(jurl_mime_addpart) {
 	return janet_wrap_abstract(part);
 }
 
-// we generate a separate handle for the generation, it's used a lot
+// XXX: this could break in GC, I don't know exactly how it works
+// if it does break for you, please tell me!
 JANET_CFUN(jurl_mime_new) {
 	janet_fixarity(argc, 1);
 	jurl_mime   *mime = (jurl_mime*)janet_abstract(&jurl_mimetype, sizeof(jurl_mime));
