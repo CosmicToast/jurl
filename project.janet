@@ -10,11 +10,13 @@
   :source  ["src/main.c"
             "src/jurl.c"
             "src/callbacks.c"
+            "src/cleanup.c"
             "src/enums.c"
             "src/errors.c"
             "src/getinfo.c"
             "src/mime.c"
-            "src/setopt.c"])
+            "src/setopt.c"
+            "src/util.c"])
 
 (declare-source
   :source ["jurl"])

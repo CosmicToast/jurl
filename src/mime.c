@@ -6,6 +6,7 @@ static int jurl_mime_gc(void *p, size_t s) {
 	jurl_mime *mime = (jurl_mime*)p;
 	if (mime->clean) curl_mime_free(mime->handle);
 	curl_easy_cleanup(mime->curl);
+	jurl_do_cleanup(&mime->cleanup);
 	return 0;
 }
 
@@ -182,10 +183,21 @@ JANET_CFUN(jurl_mime_type) {
 	return jurl_geterror(ret);
 }
 
-// TODO: really? I have to do cleanup *again*? ;-;
+// due to how the cleanup works, I either have to convert mimepart to an abstract
+// or also pass through the mime
+// I opt for option 2 for now
+// note that the part MUST belong to the mime
 JANET_CFUN(jurl_mime_headers) {
-	janet_panic("not implemented");
-	return janet_wrap_nil(); // unreachable
+	janet_fixarity(argc, 3);
+	jurl_mime *mime = janet_getjurlmime(argv, 0);
+	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 1);
+	struct jurl_cleanup *clean = register_cleanup(&mime->cleanup, JURL_CLEANUP_TYPE_SLIST);
+	if (!janet_getslist(&clean->slist, argv, 2)) {
+		janet_panicf("failed to get slist in jurl_mime_headers, got %v", argv[2]);
+	}
+	return jurl_geterror(
+			curl_mime_headers(part, clean->slist, 0)
+			);
 }
 
 JANET_CFUN(jurl_mime_encoder) {

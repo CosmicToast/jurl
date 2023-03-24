@@ -417,7 +417,7 @@ JANET_CFUN(jurl_setopt) {
 			break;
 		case JURL_PARAMTYPE_SLIST: {
 			// we register the cleanup ahead of time, because...
-			struct jurl_cleanup *clean = register_cleanup(jurl, JURL_CLEANUP_TYPE_SLIST);
+			struct jurl_cleanup *clean = register_cleanup(&jurl->cleanup, JURL_CLEANUP_TYPE_SLIST);
 
 			JanetView args = janet_getindexed(argv, 2);
 			for (int32_t i = 0; i < args.len; i++) {

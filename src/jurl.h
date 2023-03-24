@@ -2,7 +2,7 @@
 #include <curl/curl.h>
 #include <janet.h>
 
-// jurl globals
+// cleanup.c
 enum jurl_cleanup_type {
 	JURL_CLEANUP_TYPE_SLIST,
 };
@@ -14,40 +14,40 @@ struct jurl_cleanup {
 	};
 };
 
+struct jurl_cleanup *register_cleanup(struct jurl_cleanup **prev, enum jurl_cleanup_type type);
+void jurl_do_cleanup(struct jurl_cleanup **src);
+
+// jurl.c
 struct jurl_handle {
 	CURL* handle;
 	struct jurl_cleanup* cleanup;
 };
 typedef struct jurl_handle jurl_handle;
 
-// jurl.c
-struct jurl_cleanup *register_cleanup(jurl_handle *jurl, enum jurl_cleanup_type type);
-JANET_CFUN(jurl_escape);
-JANET_CFUN(jurl_unescape);
 JANET_CFUN(jurl_new);
 JANET_CFUN(jurl_reset);
 JANET_CFUN(jurl_dup);
 JANET_CFUN(jurl_perform);
-JANET_CFUN(jurl_wrap_error);
 jurl_handle *janet_getjurl(Janet *argv, int32_t n);
 
-// jurl_callbacks.c
+// callbacks.c
 CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun);
 
-// jurl_enums.c
+// enums.c
 CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val);
 
-// jurl_errors.c
+// errors.c
 Janet jurl_geterror(CURLcode code);
 JANET_CFUN(jurl_strerror);
 
-// jurl_getinfo.c
+// getinfo.c
 JANET_CFUN(jurl_getinfo);
 
-// jurl_mime.c
+// mime.c
 struct jurl_mime {
 	CURL *curl;
 	curl_mime *handle;
+	struct jurl_cleanup* cleanup;
 	int clean;
 };
 typedef struct jurl_mime jurl_mime;
@@ -64,5 +64,11 @@ JANET_CFUN(jurl_mime_encoder);
 JANET_CFUN(jurl_mime_subparts);
 jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
 
-// jurl_setopt.c
+// setopt.c
 JANET_CFUN(jurl_setopt);
+
+// util.c
+int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n);
+JANET_CFUN(jurl_escape);
+JANET_CFUN(jurl_unescape);
+JANET_CFUN(jurl_wrap_error);

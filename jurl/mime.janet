@@ -7,15 +7,15 @@
   ~(when (some? ,sym) (,act ,handle ,sym)))
 
 (defn- mime-part
-  [handle {:name     name
-           :attach   amime
-           :data     data
-           :data-cb  data-cb
-           :filedata filedata
-           :filename filename
-           :type     mimetype
-           :headers  headers
-           :encoder  encoder}]
+  [m handle {:name     name
+             :attach   amime
+             :data     data
+             :data-cb  data-cb
+             :filedata filedata
+             :filename filename
+             :type     mimetype
+             :headers  headers
+             :encoder  encoder}]
   (some-do handle name     native/mime-name)
   (some-do handle data     native/mime-data)
   (some-do handle filedata native/mime-filedata)
@@ -27,18 +27,18 @@
   (when (some? amime)
     (:attach amime handle))
   (when (some? headers)
-    (native/mime-headers handle (->> headers
-                                     (map pairs)
-                                     (map (fn [[k v]] (string/format "%s: %s" k v)))
-                                     sort
-                                     freeze))))
+    (native/mime-headers m handle (->> headers
+                                       pairs
+                                       (map (fn [[k v]] (string/format "%s: %s" k v)))
+                                       sort
+                                       freeze))))
 
 # define a complete mime in one go
 (defn new
   [& parts]
   (def out (native/mime-new))
   (each part parts
-    (mime-part (:addpart out) part))
+    (mime-part out (:addpart out) part))
   out)
 
 # example

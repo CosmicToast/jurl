@@ -5,18 +5,7 @@ static int jurl_gc(void *p, size_t s) {
 	(void) s;
 	jurl_handle *jurl = (jurl_handle*)p;
 	if (jurl->handle) curl_easy_cleanup(jurl->handle);
-	while (jurl->cleanup) {
-		struct jurl_cleanup *cur = jurl->cleanup;
-		switch (cur->type) {
-		case JURL_CLEANUP_TYPE_SLIST:
-			curl_slist_free_all(cur->slist);
-			break;
-		default:
-			janet_panic("unknown type of cleanup data in jurl_gc");
-		}
-		jurl->cleanup = cur->next;
-		free(cur);
-	}
+	jurl_do_cleanup(&jurl->cleanup);
 	return 0;
 }
 
@@ -72,78 +61,12 @@ jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
 	return (jurl_handle*)janet_getabstract(argv, n, &jurl_type);
 }
 
-// this function plays fast and loose and I hope the gc doesn't kill me for it
-// anyway, it goes like so:
-// (wrap-error :ok  something) -> [:ok something]
-// (wrap-error :err something) -> [:err "explanation of :err"]
-JANET_CFUN(jurl_wrap_error) {
-	janet_fixarity(argc, 2);
-	CURLcode code;
-	if (janet_checktype(argv[0], JANET_NUMBER)) {
-		argv[0] = jurl_geterror(janet_getinteger(argv, 0));
-	}
-	if (!janet_checktype(argv[0], JANET_KEYWORD)) {
-		janet_panicf("jurl_wrap_error: expected number or keyword, got %T", janet_type(argv[0]));
-	}
-	if (!janet_keyeq(argv[0], "ok")) {
-		// will this break one day?
-		// find out next time!
-		argv[1] = jurl_strerror(1, argv);
-	}
-	return janet_wrap_tuple(janet_tuple_n(argv, 2));
-}
-
-JANET_CFUN(jurl_escape) {
-	janet_fixarity(argc, 1);
-	JanetByteView b = janet_getbytes(argv, 0);
-	CURL* curl;
-#if !CURL_AT_LEAST_VERSION(7,82,0)
-	curl = curl_easy_init();
-#endif
-
-	char *s = curl_easy_escape(curl, (const char*)b.bytes, b.len);
-	Janet out = janet_cstringv(s);
-
-	curl_free(s);
-#if !CURL_AT_LEAST_VERSION(7,82,0)
-	curl_easy_cleanup(curl);
-#endif
-	return out;
-}
-
-JANET_CFUN(jurl_unescape) {
-	janet_fixarity(argc, 1);
-	JanetByteView b = janet_getbytes(argv, 0);
-	CURL *curl;
-#if !CURL_AT_LEAST_VERSION(7,82,0)
-	curl = curl_easy_init();
-#endif
-
-	int len;
-	char *s = curl_easy_unescape(curl, (const char*)b.bytes, b.len, &len);
-	Janet out = janet_stringv((const uint8_t*)s, len);
-
-	curl_free(s);
-#if !CURL_AT_LEAST_VERSION(7,82,0)
-	curl_easy_cleanup(curl);
-#endif
-	return out;
-}
-
 JANET_CFUN(jurl_new) {
 	janet_fixarity(argc, 0);
 	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl_handle));
 	jurl->handle = curl_easy_init();
 	jurl->cleanup = NULL;
 	return janet_wrap_abstract(jurl);
-}
-
-struct jurl_cleanup *register_cleanup(jurl_handle *jurl, enum jurl_cleanup_type type) {
-	struct jurl_cleanup *out = malloc(sizeof(struct jurl_cleanup));
-	out->next = jurl->cleanup;
-	jurl->cleanup = out;
-	out->type = type;
-	return out;
 }
 
 JANET_CFUN(jurl_reset) {
