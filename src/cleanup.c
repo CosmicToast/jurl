@@ -1,7 +1,7 @@
 #include "jurl.h"
 
 void jurl_do_cleanup(struct jurl_cleanup **src) {
-	while (src) {
+	while (*src) {
 		struct jurl_cleanup *cur = *src;
 		switch (cur->type) {
 		case JURL_CLEANUP_TYPE_SLIST:
