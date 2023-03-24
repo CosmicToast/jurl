@@ -55,21 +55,25 @@ JANET_CFUN(jurl_getinfo);
 // jurl.c
 JANET_CFUN(jurl_dup);
 jurl_handle *janet_getjurl(Janet *argv, int32_t n);
+JANET_CFUN(jurl_global_init);
+JANET_CFUN(jurl_global_cleanup);
 JANET_CFUN(jurl_new);
 JANET_CFUN(jurl_perform);
 JANET_CFUN(jurl_reset);
 
-// mime.c
+// mime.c - mime
 JANET_CFUN(jurl_mime_addpart);
+JANET_CFUN(jurl_mime_new);
+jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
+
+// mime.c - mimepart
 JANET_CFUN(jurl_mime_data);
 JANET_CFUN(jurl_mime_data_cb);
 JANET_CFUN(jurl_mime_encoder);
 JANET_CFUN(jurl_mime_filedata);
 JANET_CFUN(jurl_mime_filename);
-jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
 JANET_CFUN(jurl_mime_headers);
 JANET_CFUN(jurl_mime_name);
-JANET_CFUN(jurl_mime_new);
 JANET_CFUN(jurl_mime_subparts);
 JANET_CFUN(jurl_mime_type);
 
