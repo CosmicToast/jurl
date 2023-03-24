@@ -418,18 +418,8 @@ JANET_CFUN(jurl_setopt) {
 		case JURL_PARAMTYPE_SLIST: {
 			// we register the cleanup ahead of time, because...
 			struct jurl_cleanup *clean = register_cleanup(&jurl->cleanup, JURL_CLEANUP_TYPE_SLIST);
-
-			JanetView args = janet_getindexed(argv, 2);
-			for (int32_t i = 0; i < args.len; i++) {
-				const char *s = janet_getcstring(args.items, i);
-				// we use the cleanup pointer directly, this way...
-				struct curl_slist *newlist = curl_slist_append(clean->slist, s);
-				if (!newlist) {
-					// if we ever panic in the *middle* of handling,
-					// the slist will get cleaned up during garbage collection anyway
-					janet_panic("failed to append to slist in jurl_setopt");
-				}
-				clean->slist = newlist;
+			if (!janet_getslist(&clean->slist, argv, 2)) {
+				janet_panic("failed to append to slist in jurl_setopt");
 			}
 			return jurl_geterror(
 				curl_easy_setopt(jurl->handle, opt->opt, clean->slist

@@ -193,7 +193,7 @@ JANET_CFUN(jurl_mime_headers) {
 	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 1);
 	struct jurl_cleanup *clean = register_cleanup(&mime->cleanup, JURL_CLEANUP_TYPE_SLIST);
 	if (!janet_getslist(&clean->slist, argv, 2)) {
-		janet_panicf("failed to get slist in jurl_mime_headers, got %v", argv[2]);
+		janet_panic("failed to append to slist in jurl_mime_headers");
 	}
 	return jurl_geterror(
 			curl_mime_headers(part, clean->slist, 0)
