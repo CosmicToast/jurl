@@ -1,3 +1,4 @@
+// enums.c: implements curl_easy_setopt options that take bitmasks or a specific value
 #include "jurl.h"
 
 struct jurl_enum {

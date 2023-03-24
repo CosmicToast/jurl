@@ -1,3 +1,4 @@
+// getinfo.c: implements curl_easy_getinfo
 #include "jurl.h"
 
 enum jurl_paramtype {

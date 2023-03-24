@@ -1,3 +1,4 @@
+// cleanup.c: implements cleanup system that's shared across jurl abstract options
 #include "jurl.h"
 
 void jurl_do_cleanup(struct jurl_cleanup **src) {

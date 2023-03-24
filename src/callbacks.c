@@ -1,3 +1,4 @@
+// callbacks.c: implements curl_easy_setopt options that take callbacks
 #include "jurl.h"
 
 static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {

@@ -1,3 +1,4 @@
+// errors.c: libcurl-errors(3)
 #include "jurl.h"
 
 struct jurl_error {

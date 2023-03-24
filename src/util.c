@@ -1,3 +1,4 @@
+// util.c: implements wrappers around libcurl functions that don't fit anywhere else
 #include "jurl.h"
 
 int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n) {

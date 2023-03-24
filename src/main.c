@@ -1,3 +1,4 @@
+// main.c: registers functions for use in janet
 #include "jurl.h"
 
 #undef JANET_REG

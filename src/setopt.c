@@ -1,3 +1,4 @@
+// setopt.c: implements curl_easy_setopt
 #include "jurl.h"
 
 enum jurl_paramtype {
