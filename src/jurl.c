@@ -1,14 +1,6 @@
 // jurl.c - a curl_easy minimal wrapper for janet
 #include "jurl.h"
 
-static int jurl_gc(void *p, size_t s) {
-	(void) s;
-	jurl_handle *jurl = (jurl_handle*)p;
-	if (jurl->handle) curl_easy_cleanup(jurl->handle);
-	jurl_do_cleanup(&jurl->cleanup);
-	return 0;
-}
-
 static JanetMethod jurl_methods[] = {
 	{"reset",   jurl_reset},
 	{"dup",     jurl_dup},
@@ -17,6 +9,14 @@ static JanetMethod jurl_methods[] = {
 	{"setopt",  jurl_setopt},
 	{NULL,      NULL},
 };
+
+static int jurl_gc(void *p, size_t s) {
+	(void) s;
+	jurl_handle *jurl = (jurl_handle*)p;
+	if (jurl->handle) curl_easy_cleanup(jurl->handle);
+	jurl_do_cleanup(&jurl->cleanup);
+	return 0;
+}
 
 // methods + getinfo
 static int jurl_get(void *p, Janet key, Janet *out) {
@@ -57,31 +57,16 @@ static const JanetAbstractType jurl_type = {
 	JANET_ATEND_PUT
 };
 
-jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
-	return (jurl_handle*)janet_getabstract(argv, n, &jurl_type);
-}
-
-JANET_CFUN(jurl_new) {
-	janet_fixarity(argc, 0);
-	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl_handle));
-	jurl->handle = curl_easy_init();
-	jurl->cleanup = NULL;
-	return janet_wrap_abstract(jurl);
-}
-
-JANET_CFUN(jurl_reset) {
-	janet_fixarity(argc, 1);
-	jurl_handle *jurl = janet_getjurl(argv, 0);
-	curl_easy_reset(jurl->handle);
-	return janet_wrap_abstract(jurl);
-}
-
 JANET_CFUN(jurl_dup) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = janet_getjurl(argv, 0);
 	jurl_handle *newj = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
 	newj->handle = curl_easy_duphandle(jurl->handle);
 	return janet_wrap_abstract(newj);
+}
+
+jurl_handle *janet_getjurl(Janet *argv, int32_t n) {
+	return (jurl_handle*)janet_getabstract(argv, n, &jurl_type);
 }
 
 JANET_CFUN(jurl_global_init) {
@@ -120,9 +105,24 @@ JANET_CFUN(jurl_global_cleanup) {
 	return janet_wrap_nil();
 }
 
+JANET_CFUN(jurl_new) {
+	janet_fixarity(argc, 0);
+	jurl_handle *jurl = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl_handle));
+	jurl->handle = curl_easy_init();
+	jurl->cleanup = NULL;
+	return janet_wrap_abstract(jurl);
+}
+
 JANET_CFUN(jurl_perform) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = (jurl_handle*)janet_getjurl(argv, 0);
 	return jurl_geterror(curl_easy_perform(jurl->handle));
+}
+
+JANET_CFUN(jurl_reset) {
+	janet_fixarity(argc, 1);
+	jurl_handle *jurl = janet_getjurl(argv, 0);
+	curl_easy_reset(jurl->handle);
+	return janet_wrap_abstract(jurl);
 }
 
