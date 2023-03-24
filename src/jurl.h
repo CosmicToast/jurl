@@ -27,11 +27,17 @@ typedef struct jurl_handle jurl_handle;
 // mime.c
 struct jurl_mime {
 	CURL *curl;
-	curl_mime *handle;
-	struct jurl_cleanup* cleanup;
+	curl_mime *mime;
 	int clean;
 };
 typedef struct jurl_mime jurl_mime;
+
+struct jurl_mimepart {
+	curl_mimepart *mimepart;
+	jurl_mime     *parent;
+	struct jurl_cleanup *cleanup;
+};
+typedef struct jurl_mimepart jurl_mimepart;
 
 // = functions
 
@@ -67,6 +73,7 @@ JANET_CFUN(jurl_mime_new);
 jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
 
 // mime.c - mimepart
+jurl_mimepart *janet_getjurlmimepart(Janet *argv, int32_t n);
 JANET_CFUN(jurl_mime_data);
 JANET_CFUN(jurl_mime_data_cb);
 JANET_CFUN(jurl_mime_encoder);

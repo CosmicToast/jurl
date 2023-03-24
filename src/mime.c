@@ -1,20 +1,20 @@
 // jurl_mime implements curl_mime_*
 #include "jurl.h"
 
-static int jurl_mime_gc(void *p, size_t s) {
-	(void) s;
-	jurl_mime *mime = (jurl_mime*)p;
-	if (mime->clean) curl_mime_free(mime->handle);
-	curl_easy_cleanup(mime->curl);
-	jurl_do_cleanup(&mime->cleanup);
-	return 0;
-}
-
+// static mime
 static JanetMethod jurl_mime_methods[] = {
 	{"addpart", jurl_mime_addpart},
 	{"attach",  jurl_mime_subparts},
 	{NULL, NULL},
 };
+
+static int jurl_mime_gc(void *p, size_t s) {
+	(void) s;
+	jurl_mime *mime = (jurl_mime*)p;
+	if (mime->clean) curl_mime_free(mime->mime);
+	curl_easy_cleanup(mime->curl);
+	return 0;
+}
 
 static int jurl_mime_get(void *p, Janet key, Janet *out) {
 	(void) p;
@@ -25,55 +25,102 @@ static int jurl_mime_get(void *p, Janet key, Janet *out) {
 }
 
 static const JanetAbstractType jurl_mimetype = {
-	"jurl-mime",  // name
-	jurl_mime_gc, // gc
-	NULL,         // gcmark
-	jurl_mime_get,     //get
+	"jurl-mime",   // name
+	jurl_mime_gc,  // gc
+	NULL,          // gcmark
+	jurl_mime_get, //get
 	JANET_ATEND_GET
 };
 
+// static mimepart
+static JanetMethod jurl_mimepart_methods[] = {
+	{"data",     jurl_mime_data},
+	{"data-cb",  jurl_mime_data_cb},
+	{"encoder",  jurl_mime_encoder},
+	{"filedata", jurl_mime_filedata},
+	{"filename", jurl_mime_filename},
+	{"headers",  jurl_mime_headers},
+	{"name",     jurl_mime_name},
+	{"subparts", jurl_mime_subparts},
+	{"type",     jurl_mime_type},
+	{NULL, NULL},
+};
+
+static int jurl_mimepart_gc(void *p, size_t s) {
+	(void) s;
+	jurl_mimepart *part = (jurl_mimepart*)p;
+	jurl_do_cleanup(&part->cleanup);
+	return 0;
+}
+
+static int jurl_mimepart_get(void *p, Janet key, Janet *out) {
+	(void) p;
+	if (!janet_checktype(key, JANET_KEYWORD)) {
+		return 0;
+	}
+	return janet_getmethod(janet_unwrap_keyword(key), jurl_mimepart_methods, out);
+}
+
+static const JanetAbstractType jurl_mimeparttype = {
+	"jurl-mimepart",   // name
+	jurl_mimepart_gc,  // gc
+	NULL,              // gcmark
+	jurl_mimepart_get, //get
+	JANET_ATEND_GET
+};
+
+// mime
 jurl_mime *janet_getjurlmime(Janet *argv, int32_t n) {
 	return (jurl_mime*)janet_getabstract(argv, n, &jurl_mimetype);
+}
+
+JANET_CFUN(jurl_mime_addpart) {
+	janet_fixarity(argc, 1);
+	jurl_mime     *mime = janet_getjurlmime(argv, 0);
+	jurl_mimepart *part = (jurl_mimepart*)janet_abstract(&jurl_mimeparttype, sizeof(jurl_mimepart));
+	part->cleanup  = NULL;
+	part->mimepart = curl_mime_addpart(mime->mime);
+	part->parent   = mime;
+	return janet_wrap_abstract(part);
 }
 
 // we generate a separate handle for the generation, it's used a lot
 JANET_CFUN(jurl_mime_new) {
 	janet_fixarity(argc, 0);
 	jurl_mime *mime = (jurl_mime*)janet_abstract(&jurl_mimetype, sizeof(jurl_mime));
-	mime->clean  = 1; // clean by default
-	mime->curl   = curl_easy_init();
-	mime->handle = curl_mime_init(mime->curl);
+	mime->clean = 1; // clean by default
+	mime->curl  = curl_easy_init();
+	mime->mime  = curl_mime_init(mime->curl);
 	return janet_wrap_abstract(mime);
 }
 
-JANET_CFUN(jurl_mime_addpart) {
-	janet_fixarity(argc, 1);
-	jurl_mime *mime = janet_getjurlmime(argv, 0);
-	return janet_wrap_pointer(curl_mime_addpart(mime->handle));
+// mimepart
+jurl_mimepart *janet_getjurlmimepart(Janet *argv, int32_t n) {
+	return (jurl_mimepart*)janet_getabstract(argv, n, &jurl_mimeparttype);
 }
 
 JANET_CFUN(jurl_mime_name) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_name(part, NULL);
+		ret = curl_mime_name(part->mimepart, NULL);
 	} else {
 		const char *s = (const char*)janet_getcstring(argv, 1);
-		ret = curl_mime_name(part, s);
+		ret = curl_mime_name(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
 }
 
 JANET_CFUN(jurl_mime_data) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_data(part, NULL, 0);
+		ret = curl_mime_data(part->mimepart, NULL, 0);
 	} else {
 		JanetByteView bytes = janet_getbytes(argv, 1);
-		ret = curl_mime_data(part, (const char*)bytes.bytes, bytes.len);
+		ret = curl_mime_data(part->mimepart, (const char*)bytes.bytes, bytes.len);
 	}
 	return jurl_geterror(ret);
 }
@@ -136,87 +183,82 @@ static int seekfunc(void *arg, curl_off_t offset, int origin) {
 // (callback :seek offset :set | :cur | :end)
 JANET_CFUN(jurl_mime_data_cb) {
 	janet_fixarity(argc, 3);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
-	curl_off_t size = janet_getinteger64(argv, 1);
-	JanetFunction *fun = janet_getfunction(argv, 2);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
+	curl_off_t     size = janet_getinteger64(argv, 1);
+	JanetFunction  *fun = janet_getfunction(argv, 2);
 
-	CURLcode res = curl_mime_data_cb(part, size, readfunc, seekfunc, NULL, fun);
+	CURLcode res = curl_mime_data_cb(part->mimepart, size, readfunc, seekfunc, NULL, fun);
 	return jurl_geterror(res);
 }
 
 JANET_CFUN(jurl_mime_filedata) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_filedata(part, NULL);
+		ret = curl_mime_filedata(part->mimepart, NULL);
 	} else {
 		const char *s = (const char*)janet_getcstring(argv, 1);
-		ret = curl_mime_filedata(part, s);
+		ret = curl_mime_filedata(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
 }
 
 JANET_CFUN(jurl_mime_filename) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_filename(part, NULL);
+		ret = curl_mime_filename(part->mimepart, NULL);
 	} else {
 		const char *s = (const char*)janet_getcstring(argv, 1);
-		ret = curl_mime_filename(part, s);
+		ret = curl_mime_filename(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
 }
 
 JANET_CFUN(jurl_mime_type) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_type(part, NULL);
+		ret = curl_mime_type(part->mimepart, NULL);
 	} else {
 		const char *s = (const char*)janet_getcstring(argv, 1);
-		ret = curl_mime_type(part, s);
+		ret = curl_mime_type(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
 }
 
-// due to how the cleanup works, I either have to convert mimepart to an abstract
-// or also pass through the mime
-// I opt for option 2 for now
-// note that the part MUST belong to the mime
 JANET_CFUN(jurl_mime_headers) {
-	janet_fixarity(argc, 3);
-	jurl_mime *mime = janet_getjurlmime(argv, 0);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 1);
-	struct jurl_cleanup *clean = register_cleanup(&mime->cleanup, JURL_CLEANUP_TYPE_SLIST);
-	if (!janet_getslist(&clean->slist, argv, 2)) {
+	janet_fixarity(argc, 2);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
+	struct jurl_cleanup *clean = register_cleanup(&part->cleanup, JURL_CLEANUP_TYPE_SLIST);
+	if (!janet_getslist(&clean->slist, argv, 1)) {
 		janet_panic("failed to append to slist in jurl_mime_headers");
 	}
 	return jurl_geterror(
-			curl_mime_headers(part, clean->slist, 0)
+			curl_mime_headers(part->mimepart, clean->slist, 0)
 			);
 }
 
 JANET_CFUN(jurl_mime_encoder) {
 	janet_fixarity(argc, 2);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 0);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
 	CURLcode ret;
 	if (janet_checktype(argv[1], JANET_NIL)) {
-		ret = curl_mime_encoder(part, NULL);
+		ret = curl_mime_encoder(part->mimepart, NULL);
 	} else {
 		if        (janet_keyeq(argv[1], "binary")) {
-			ret = curl_mime_encoder(part, "binary");
+			ret = curl_mime_encoder(part->mimepart, "binary");
 		} else if (janet_keyeq(argv[1], "8bit")) {
-			ret = curl_mime_encoder(part, "8bit");
+			ret = curl_mime_encoder(part->mimepart, "8bit");
 		} else if (janet_keyeq(argv[1], "7bit")) {
-			ret = curl_mime_encoder(part, "7bit");
+			ret = curl_mime_encoder(part->mimepart, "7bit");
 		} else if (janet_keyeq(argv[1], "base64")) {
-			ret = curl_mime_encoder(part, "base64");
+			ret = curl_mime_encoder(part->mimepart, "base64");
 		} else if (janet_keyeq(argv[1], "quoted-printable")) {
-			ret = curl_mime_encoder(part, "quoted-printable");
+			ret = curl_mime_encoder(part->mimepart, "quoted-printable");
 		} else {
 			janet_panic("jurl_mime_encoder: invalid encoding type");
 		}
@@ -224,12 +266,11 @@ JANET_CFUN(jurl_mime_encoder) {
 	return jurl_geterror(ret);
 }
 
-// this is exposed as (:attach mime part)
 JANET_CFUN(jurl_mime_subparts) {
 	janet_fixarity(argc, 2);
-	jurl_mime *mime = janet_getjurlmime(argv, 0);
-	curl_mimepart *part = (curl_mimepart*)janet_getpointer(argv, 1);
-	CURLcode ret = curl_mime_subparts(part, mime->handle);
+	jurl_mimepart *part = janet_getjurlmimepart(argv, 0);
+	jurl_mime     *mime = janet_getjurlmime(argv, 1);
+	CURLcode ret = curl_mime_subparts(part->mimepart, mime->mime);
 	if (ret == CURLE_OK) mime->clean = 0; // no longer needs cleaning
 	return jurl_geterror(ret);
 }

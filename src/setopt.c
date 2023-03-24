@@ -439,11 +439,13 @@ JANET_CFUN(jurl_setopt) {
 				jurl_setcallback(jurl, opt->opt, janet_getfunction(argv, 2)
 				));
 			break;
-		case JURL_PARAMTYPE_MIME:
+		case JURL_PARAMTYPE_MIME: {
+			jurl_mime *mime = janet_getjurlmime(argv, 2);
 			return jurl_geterror(
-				curl_easy_setopt(jurl->handle, opt->opt, janet_getjurlmime(argv, 2)
+				curl_easy_setopt(jurl->handle, opt->opt, mime->mime
 				));
 			break;
+		}
 		case JURL_PARAMTYPE_BLOB: {
 			JanetByteView bytes = janet_getbytes(argv, 2);
 			struct curl_blob blob;
