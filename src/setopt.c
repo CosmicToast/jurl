@@ -10,6 +10,7 @@ enum jurl_paramtype {
 	JURL_PARAMTYPE_OFF_T,
 	JURL_PARAMTYPE_CALLBACK,
 	JURL_PARAMTYPE_MIME,
+	JURL_PARAMTYPE_BLOB,
 };
 struct jurl_opt {
 	CURLoption opt;
@@ -264,15 +265,15 @@ static const struct jurl_opt jurl_opts[] = {
 
 	// * ssl and security options
 	{CURLOPT_SSLCERT,               "sslcert",               JURL_PARAMTYPE_STRING},
-	// TODO: sslcert-blob: curl_blob
+	{CURLOPT_SSLCERT_BLOB,          "sslcert-blob",          JURL_PARAMTYPE_BLOB},
 	{CURLOPT_PROXY_SSLCERT,         "proxy-sslcert",         JURL_PARAMTYPE_STRING},
-	// TODO: proxy-sslcert-blob: curl_blob
+	{CURLOPT_PROXY_SSLCERT_BLOB,    "proxy-sslcert-blob",    JURL_PARAMTYPE_BLOB},
 	{CURLOPT_SSLCERTTYPE,           "sslcerttype",           JURL_PARAMTYPE_STRING}, // not type checked, PEM|DER|P12
 	{CURLOPT_PROXY_SSLCERTTYPE,     "proxy-sslcerttype",     JURL_PARAMTYPE_STRING},
 	{CURLOPT_SSLKEY,                "sslkey",                JURL_PARAMTYPE_STRING},
-	// TODO: sslkey-blob: curl_blob
+	{CURLOPT_SSLKEY_BLOB,           "sslkey-blob",           JURL_PARAMTYPE_BLOB},
 	{CURLOPT_PROXY_SSLKEY,          "proxy-sslkey",          JURL_PARAMTYPE_STRING},
-	// TODO: proxy-sslkey-blob: curl_blob
+	{CURLOPT_PROXY_SSLKEY_BLOB,     "proxy-sslkey-blob",     JURL_PARAMTYPE_BLOB},
 	{CURLOPT_SSLKEYTYPE,            "sslkeytype",            JURL_PARAMTYPE_STRING}, // PEM|DER|ENG
 	{CURLOPT_PROXY_SSLKEYTYPE,      "proxy-sslkeytype",      JURL_PARAMTYPE_STRING},
 	{CURLOPT_KEYPASSWD,             "keypasswd",             JURL_PARAMTYPE_STRING},
@@ -293,13 +294,13 @@ static const struct jurl_opt jurl_opts[] = {
 	{CURLOPT_SSL_VERIFYSTATUS,      "ssl-verifystatus",      JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_DOH_SSL_VERIFYSTATUS,  "doh-ssl-verifystatus",  JURL_PARAMTYPE_BOOLEAN},
 	{CURLOPT_CAINFO,                "cainfo",                JURL_PARAMTYPE_STRING},
-	// TODO: cainfo-blob: curl_blob
+	{CURLOPT_CAINFO_BLOB,           "cainfo-blob",           JURL_PARAMTYPE_BLOB},
 	{CURLOPT_PROXY_CAINFO,          "proxy-cainfo",          JURL_PARAMTYPE_STRING},
-	// TODO: proxy-cainfo-blob: curl_blob
+	{CURLOPT_PROXY_CAINFO_BLOB,     "proxy-cainfo-blob",     JURL_PARAMTYPE_BLOB},
 	{CURLOPT_ISSUERCERT,            "issuercert",            JURL_PARAMTYPE_STRING},
-	// TODO: issuercert-blob: curl_blob
+	{CURLOPT_ISSUERCERT_BLOB,       "issuercert-blob",       JURL_PARAMTYPE_BLOB},
 	{CURLOPT_PROXY_ISSUERCERT,      "proxy-issuercert",      JURL_PARAMTYPE_STRING},
-	// TODO: proxy-issuercert-blob: curl_blob
+	{CURLOPT_PROXY_ISSUERCERT_BLOB, "proxy-issuercert-blob", JURL_PARAMTYPE_BLOB},
 	{CURLOPT_CAPATH,                "capath",                JURL_PARAMTYPE_STRING}, // this is important for static linking
 	{CURLOPT_PROXY_CAPATH,          "proxy-capath",          JURL_PARAMTYPE_STRING},
 	{CURLOPT_CRLFILE,               "crlfile",               JURL_PARAMTYPE_STRING},
@@ -442,6 +443,17 @@ JANET_CFUN(jurl_setopt) {
 				curl_easy_setopt(jurl->handle, opt->opt, janet_getjurlmime(argv, 2)
 				));
 			break;
+		case JURL_PARAMTYPE_BLOB: {
+			JanetByteView bytes = janet_getbytes(argv, 2);
+			struct curl_blob blob;
+			blob.flags = CURL_BLOB_COPY;
+			blob.data  = bytes.bytes;
+			blob.len   = bytes.len;
+			return jurl_geterror(
+				curl_easy_setopt(jurl->handle, opt->opt, &blob
+				));
+			break;
+	    }
 		default:
 			janet_panic("jurl_setopt: unrecognized param type");
 	}
