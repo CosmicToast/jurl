@@ -2,10 +2,13 @@
 #include <curl/curl.h>
 #include <janet.h>
 
+// = structures
+
 // cleanup.c
 enum jurl_cleanup_type {
 	JURL_CLEANUP_TYPE_SLIST,
 };
+
 struct jurl_cleanup {
 	struct jurl_cleanup *next;
 	enum jurl_cleanup_type type;
@@ -14,9 +17,6 @@ struct jurl_cleanup {
 	};
 };
 
-struct jurl_cleanup *register_cleanup(struct jurl_cleanup **prev, enum jurl_cleanup_type type);
-void jurl_do_cleanup(struct jurl_cleanup **src);
-
 // jurl.c
 struct jurl_handle {
 	CURL* handle;
@@ -24,14 +24,23 @@ struct jurl_handle {
 };
 typedef struct jurl_handle jurl_handle;
 
-JANET_CFUN(jurl_new);
-JANET_CFUN(jurl_reset);
-JANET_CFUN(jurl_dup);
-JANET_CFUN(jurl_perform);
-jurl_handle *janet_getjurl(Janet *argv, int32_t n);
+// mime.c
+struct jurl_mime {
+	CURL *curl;
+	curl_mime *handle;
+	struct jurl_cleanup* cleanup;
+	int clean;
+};
+typedef struct jurl_mime jurl_mime;
+
+// = functions
 
 // callbacks.c
 CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun);
+
+// cleanup.c
+void jurl_do_cleanup(struct jurl_cleanup **src);
+struct jurl_cleanup *register_cleanup(struct jurl_cleanup **prev, enum jurl_cleanup_type type);
 
 // enums.c
 CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val);
@@ -43,26 +52,26 @@ JANET_CFUN(jurl_strerror);
 // getinfo.c
 JANET_CFUN(jurl_getinfo);
 
+// jurl.c
+JANET_CFUN(jurl_dup);
+jurl_handle *janet_getjurl(Janet *argv, int32_t n);
+JANET_CFUN(jurl_new);
+JANET_CFUN(jurl_perform);
+JANET_CFUN(jurl_reset);
+
 // mime.c
-struct jurl_mime {
-	CURL *curl;
-	curl_mime *handle;
-	struct jurl_cleanup* cleanup;
-	int clean;
-};
-typedef struct jurl_mime jurl_mime;
-JANET_CFUN(jurl_mime_new);
 JANET_CFUN(jurl_mime_addpart);
-JANET_CFUN(jurl_mime_name);
 JANET_CFUN(jurl_mime_data);
 JANET_CFUN(jurl_mime_data_cb);
+JANET_CFUN(jurl_mime_encoder);
 JANET_CFUN(jurl_mime_filedata);
 JANET_CFUN(jurl_mime_filename);
-JANET_CFUN(jurl_mime_type);
-JANET_CFUN(jurl_mime_headers);
-JANET_CFUN(jurl_mime_encoder);
-JANET_CFUN(jurl_mime_subparts);
 jurl_mime *janet_getjurlmime(Janet *argv, int32_t n);
+JANET_CFUN(jurl_mime_headers);
+JANET_CFUN(jurl_mime_name);
+JANET_CFUN(jurl_mime_new);
+JANET_CFUN(jurl_mime_subparts);
+JANET_CFUN(jurl_mime_type);
 
 // setopt.c
 JANET_CFUN(jurl_setopt);
