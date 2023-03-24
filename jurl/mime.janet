@@ -35,8 +35,8 @@
 
 # define a complete mime in one go
 (defn new
-  [& parts]
-  (def out (native/mime-new))
+  [handle & parts]
+  (def out (native/mime-new handle))
   (each part parts
     (mime-part out (:addpart out) part))
   out)
