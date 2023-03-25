@@ -1,44 +1,51 @@
 # wrapper around native/mime stuff
 (import jurl/native)
 
-(defn- some? [x] (not (nil? x)))
-(defmacro- some-do
-  [handle sym act]
-  ~(when (some? ,sym) (,act ,handle ,sym)))
-
 (defn- mime-part
-  [m handle {:name     name
-             :attach   amime
-             :data     data
-             :data-cb  data-cb
-             :filedata filedata
-             :filename filename
-             :type     mimetype
-             :headers  headers
-             :encoder  encoder}]
-  (some-do handle name     native/mime-name)
-  (some-do handle data     native/mime-data)
-  (some-do handle filedata native/mime-filedata)
-  (some-do handle filename native/mime-filename)
-  (some-do handle mimetype native/mime-type)
-  (some-do handle encoder  native/mime-encoder)
-  (when (some? data-cb)
-    (native/mime-data-cb handle ;data-cb))
-  (when (some? amime)
-    (:attach amime handle))
-  (when (some? headers)
-    (native/mime-headers m handle (->> headers
-                                       pairs
-                                       (map (fn [[k v]] (string/format "%s: %s" k v)))
-                                       sort
-                                       freeze))))
+  [handle {:name     name
+           :data     data
+           :filename filename
+           :type     mimetype
+           :headers  headers
+           :encoder  encoder}]
+  (match data
+    (b (bytes? b)) (:data handle b)
+
+    # symmetric api, the above is a shortcut
+    [:bytes b] (:data handle b)
+
+    # to differentiate against bytes, pass tuple starting with :file
+    [:file fname] (:filedata fname)
+
+    # to differentiate against bytes, pass tuple starting with :mime
+    [:mime amime] (:subparts handle amime)
+
+    # for callback you must pass [size callback] since mime wants that
+    # it's the only thing that wants it, so a number in front is unambiguous
+    ([sz cb] (number? sz)) (:data-cb handle sz cb)
+
+    # allow empty body
+    nil nil
+
+    (error "mime data may only be bytes, [:bytes bytes], [:file filename], [:mime mime], or [size callback]"))
+
+  (when name     (:name     handle name))
+  (when filename (:filename handle filename))
+  (when mimetype (:type     handle mimetype))
+  (when encoder  (:encoder  handle encoder))
+  (when headers  (:headers  handle
+                            (->> headers
+                                   pairs
+                                   (map (fn [[k v]] (string/format "%s: %s" k v)))
+                                   sort
+                                   freeze))))
 
 # define a complete mime in one go
 (defn new
   [handle & parts]
-  (def out (native/mime-new handle))
+  (def out (native/new-mime handle))
   (each part parts
-    (mime-part out (:addpart out) part))
+    (mime-part (:addpart out) part))
   out)
 
 # example
