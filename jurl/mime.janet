@@ -9,7 +9,9 @@
            :headers  headers
            :encoder  encoder}]
   (match data
+    # easily differentiable api
     (b (bytes? b)) (:data handle b)
+    (amime (= (type amime) :jurl-mime)) (:subparts handle amime)
 
     # symmetric api, the above is a shortcut
     [:bytes b] (:data handle b)
@@ -22,12 +24,12 @@
 
     # for callback you must pass [size callback] since mime wants that
     # it's the only thing that wants it, so a number in front is unambiguous
-    ([sz cb] (number? sz)) (:data-cb handle sz cb)
+    ([sz cb] (and (number? sz) (function? cb))) (:data-cb handle sz cb)
 
     # allow empty body
     nil nil
 
-    (error "mime data may only be bytes, [:bytes bytes], [:file filename], [:mime mime], or [size callback]"))
+    (error "mime data may only be bytes, jurl-mime, [:bytes bytes], [:file filename], [:mime jurl-mime], or [size callback]"))
 
   (when name     (:name     handle name))
   (when filename (:filename handle filename))
