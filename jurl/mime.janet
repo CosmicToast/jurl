@@ -49,9 +49,9 @@
   out)
 
 # example
-(comment (new {:name data
+(comment (new {:name "data"
                :data "a form"}
-              {:name file
-               :data "pretending to be a file"
+              {:name "file"
+               :data [:file "local.file"]
                :filename "remote.file"
                :type "application/json"}))
