@@ -35,10 +35,10 @@
   (when encoder  (:encoder  handle encoder))
   (when headers  (:headers  handle
                             (->> headers
-                                   pairs
-                                   (map (fn [[k v]] (string/format "%s: %s" k v)))
-                                   sort
-                                   freeze))))
+                                 pairs
+                                 (map (fn [[k v]] (string/format "%s: %s" k v)))
+                                 sort
+                                 freeze))))
 
 # define a complete mime in one go
 (defn new
