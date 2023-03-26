@@ -1,7 +1,6 @@
 (import jurl/native)
 (import ./mime)
 (import ./text)
-(import ./writer)
 
 # global init on import
 (let [g (native/global-init)]
