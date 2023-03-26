@@ -14,6 +14,8 @@ For examples of the various APIs, see the tests!
 P.S. There are no tests yet, soon though.
 
 ## Installation
+`jpm install https://github.com/cosmictoast/jurl.git`
+
 This wraps around libcurl, and as such needs libcurl (library and headers for building) installed.
 Tested on linux and macos.
 
