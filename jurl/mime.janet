@@ -20,7 +20,7 @@
     [:bytes b] (:data handle b)
 
     # to differentiate against bytes, pass tuple starting with :file
-    [:file fname] (:filedata fname)
+    [:file fname] (:filedata handle fname)
 
     # to differentiate against bytes, pass tuple starting with :mime
     [:mime amime] (:subparts handle amime)
