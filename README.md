@@ -33,7 +33,7 @@ Get with a query:
 ```janet
 (request {:url "https://pie.dev/get"
           :query {:a "b"
-		          :c "d"}})
+                  :c "d"}})
 # -> {:body @"..." :error :ok :handle <jurl> :status 200}
 ```
 
@@ -41,16 +41,16 @@ A post with multipart mime (including file uploads):
 ```janet
 (request {:url "https://pie.dev/post"
           :body [{:name "field name"
-		          :filename "remote.file" # this is what makes it a file upload
-				  :data [:file "local.file"]}]})
+                  :filename "remote.file" # this is what makes it a file upload
+                  :data [:file "local.file"]}]})
 ```
 
 A post with json:
 ```janet
 (request {:url "https://pie.dev/post"
           :body (json/encode {:a "b"
-		                      :c "d"})
-		  :headers {:content-type "application/json"})
+                              :c "d"})
+          :headers {:content-type "application/json"})
 # -> {:body @"..." :error :ok :handle <jurl> :status 200}
 ```
 
