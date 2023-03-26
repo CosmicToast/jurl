@@ -1,6 +1,9 @@
 (declare-project
   :name "jurl"
-  :description "Janet cUrl")
+  :description "Janet cUrl"
+  :author "Chloe Kudryavtsev <toast@bunkerlabs.net>"
+  :license "Unlicense"
+  :repo "https://github.com/CosmicToast/jurl.git")
 
 (declare-native
   :name "jurl/native"
