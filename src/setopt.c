@@ -354,6 +354,7 @@ static const struct jurl_opt jurl_opts[] = {
 	// * telnet options
 	{CURLOPT_TELNETOPTIONS, "telnetoptions", JURL_PARAMTYPE_SLIST},
 };
+#define jurl_opts_size (sizeof(jurl_opts) / sizeof(struct jurl_opt))
 
 JANET_CFUN(jurl_setopt) {
 	janet_fixarity(argc, 3);
@@ -361,7 +362,7 @@ JANET_CFUN(jurl_setopt) {
 
 	const struct jurl_opt *opt;
 	Janet jopt = argv[1];
-	for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
+	for (size_t i = 0; i < jurl_opts_size; i++) {
 		if (janet_keyeq(jopt, jurl_opts[i].keyword)) {
 			opt = &jurl_opts[i];
 			break;
@@ -369,7 +370,7 @@ JANET_CFUN(jurl_setopt) {
 	}
 	if (!opt) {
 		int num = janet_getinteger(argv, 1);
-		for (size_t i = 0; i < sizeof(jurl_opts) / sizeof(struct jurl_opt); i++) {
+		for (size_t i = 0; i < jurl_opts_size; i++) {
 			if (num == jurl_opts[i].opt) {
 				opt = &jurl_opts[i];
 				break;
