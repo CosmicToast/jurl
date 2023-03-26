@@ -9,7 +9,10 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdat
 	janet_buffer_push_bytes(buf, (const uint8_t*)ptr, realsize);
 
 	Janet argv[1] = { janet_wrap_buffer(buf), };
-	janet_call(fun, 1, argv);
+	Janet out = janet_call(fun, 1, argv);
+	if (janet_checktype(out, JANET_NUMBER)) {
+		return janet_unwrap_integer(out); // TODO: maybe try 64bit?
+	}
 
 	return realsize;
 }
@@ -142,7 +145,7 @@ static int prereq_callback(void *clientp,
 CURLcode jurl_setcallback(jurl_handle *jurl, CURLoption opt, JanetFunction *fun) {
 	CURLcode res = 0; // we |= it so just check for != CURLE_OK
 	switch (opt) {
-		case CURLOPT_WRITEFUNCTION: // buffer -> void
+		case CURLOPT_WRITEFUNCTION: // buffer -> number | any
 			res |= curl_easy_setopt(jurl->handle, CURLOPT_WRITEDATA, fun);
 			res |= curl_easy_setopt(jurl->handle, CURLOPT_WRITEFUNCTION, write_callback);
 			break;
