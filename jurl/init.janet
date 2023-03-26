@@ -2,19 +2,32 @@
 (import ./mime)
 (import ./text)
 
+(setdyn :doc
+        ``Janet cURL: a convenient and complete http client for janet.
+
+        Important syms are:
+        * `*default-options*`
+        * request
+
+        A maximally complete close-to-source native wrapper also available in `jurl/native`.
+        ``)
+
 # global init on import
 (let [g (native/global-init)]
   (when (not= :ok g)
     (error (native/strerror g))))
 
 # default options, you can put or overwrite them and future clients will utilize that
-(var *default-options* @{:autoreferer      true
-                         :default-protocol "https"
-                         :followlocation   true
-                         :postredir        :redir-post/all
-                         :useragent        "Jurl/1.0"})
+(var *default-options*
+  "Default options to assign to handles automatically created by request."
+  @{:autoreferer      true
+    :default-protocol "https"
+    :followlocation   true
+    :postredir        :redir-post/all
+    :useragent        "Jurl/1.0"})
+
 # useful for queries and x-www-urlencoded
-(defn url-encoded
+(defn- url-encoded
   [dict]
   (-> (->> dict
            pairs
@@ -24,15 +37,96 @@
       (string/join "&")))
 
 (defn request
+  ````Performs a request as specified by the options.
+  The only required parameter is url.
+
+  The other parameters have the following meanings:
+  * auth: perform http authentication. Valid forms are:
+    * "user:pwd": authenticate with username "user" and password "pwd" using
+      the default authentication method.
+    * `["user:pwd" [:basic :digest ...]]`: as above, but specify valid
+      authentication methods.
+      For a list of possible values, see `CURLOPT_HTTPAUTH(3)`.
+  * body: sets the body of the request.
+    This is full of side-effects, so make sure you set :method if you set this.
+    Valid forms are:
+    * bytes: the body is set "as-is". Note that this implies setting the method
+      to POST and the content-type to x-www-urlencoded.
+      Both of those can be overriden using method and headers.
+    * (mime/new ...): corresponds to a multipart form submission with the
+      contents of passed handle.
+    * (fn [bytes] ...): uses the given function as a callback to read from.
+      The function must take a number of bytes to write.
+      It may return either bytes (a buffer, keyword, or string) or nil to mark
+      the body being done.
+      If the function returns >bytes bytes, all extranious bytes will be
+      truncated, so don't do that.
+    * dictionary: the dictionary is urlencoded into key-value pairs
+      non-recursively.
+      The effective result is similar to passing bytes otherwise.
+    * `[...]` equivalent to (mime/new ...) without needing to import jurl/mime.
+  * cookies: a dictionary of cookies to give to curl.
+  * headers: a dictionary of headers to give to curl.
+    Any given header value may be a list, in which case multiple headers will
+    be sent, one per value in the list.
+  * method: a keyword of what HTTP method to use. Valid options are
+    get, post, put, head, delete, patch, options, connect and trace.
+  * options: a dictionary of options to apply to the handle.
+    For the list of available options, consult `curl_easy_setopt(3)`.
+    For the list of options that are not implemented, see `src/setopt.c`.
+  * query: a dictionary of query values to add to the url.
+    You can both specify query values in the url string and in here.
+    In case the same value appears in both, both will appear in the final url,
+    and the dictionary value will appear last.
+  * stream: if this is a function, instead of buffering the entire body of the
+    response, this function will be used as a callback.
+    The function must take a buffer, and it must return either the number of
+    bytes handled (which must be lower than the size of the buffer given), or
+    anything else (which implies having handled the entire buffer).
+
+  The return value is a struct that represents the response.
+  It holds the following keys:
+  * body: either the body of the response, or :unavail if :stream was used.
+  * error: the CURLcode response from curl. :ok under normal circumstances.
+    You can get a fancy string out of this using `native/strerror`.
+  * handle: the underlying native curl handle.
+    You can use this to get additional information using getinfo, or to reuse
+    it in a future request.
+    Note that reusing it in a future request is very error prone,
+    and thus not recommended unless you know what you're doing.
+  * headers: a sorted map of received headers. If a given header appears
+    multiple times, they are joined into a list.
+  * status: the http status code. May not be relevant if error is not :ok.
+
+  A few examples:
+  ```
+  (request {:url "https://pie.dev/get})
+  ```
+  Makes a get request to `pie.dev/get`.
+
+  ```
+  (request {:url "https://pie.dev/post
+            :body {:a "b"
+                   :c "d"}})
+  ```
+  Makes a post form submission to `pie.dev/post` with parameters a and c.
+
+  ```
+  (request {:url "https://pie.dev/anything"
+            :stream (fn [b] (print b))})
+  ```
+  Performs a streaming request to "https://pie.dev/anything".
+  ````
   [{:auth    auth
     :body    body
     :cookies cookies
     :headers headers
     :method  method
     :options options
+    :query   query
     :stream  stream
     :url     url}
-   &named handle]
+   &opt handle]
 
   (assert (bytes? url) "url must be present and a string")
   (def handle (or handle
@@ -41,7 +135,12 @@
                       (put h k v))
                     h)))
   (def pt (partial put handle))
-  (pt :url url)
+
+  (if query
+    (pt :url (string url
+                     (if (string/find "?" url) "&" "?")
+                     (url-encoded query)))
+    (pt :url url))
 
   (when auth (match auth
                (userpwd (bytes? userpwd))
@@ -67,8 +166,11 @@
                # here :post is fine because it's only used in post
                (dict (dictionary? dict))
                (pt :postfields (url-encoded dict))
+
+               (indx (indexed? indx))
+               (pt :mimepost (mime/new handle ;indx))
     
-               (error "body must either be a mime to do a multipart form submission, a buffer/string, callback function, or dictionary to url-encode")))
+               (error "body must either be a mime to do a multipart form submission, a buffer/string, callback function, a list of mime parts, or dictionary to url-encode")))
 
   (when cookies
     (pt :cookie (-> (->> cookies
@@ -81,7 +183,7 @@
                   (indexed? headers)    (pt :httpheader headers)
                   (error "headers must be a dictionary or list")))
 
-  (when method (match (text/keyword-lower method)
+  (when method (case (text/keyword-lower method)
                  :get     (pt :httpget true)
                  :post    (pt :post true)
                  :put     (pt :upload true)
@@ -103,35 +205,12 @@
   (when options (eachp [k v] options
                   (pt k v)))
   
-  (:perform handle)
+  (def curlcode (:perform handle))
 
   # cookies are complicated for many reasons
   # combine :cookielist and (:headers :set-cookie) to handle yourself
-  (freeze {:body (if (function? stream) :unavail res-body)
-           :handle  handle
-           :headers (text/parse-headers res-hdr)
-           :status (handle :response-code)})) 
-
-# request format
-(comment {:auth (or
-                  userpwd
-                  [userpwd method])
-          :body (or
-                  amime
-                  bytes
-                  callback
-                  dictionary x-www-urlencoded)
-          :headers (or
-                     indexed
-                     dictionary)
-          :method  :tag
-          :options dictionary
-          :stream  callback # do streaming instead of buffering the whole response body
-          :url     string})
-
-# response format
-(comment {:body (or buffer
-                    :unavail) # if stream = true
-          :handle  handle
-          :headers dictionary
-          :status 200})
+  {:body    (if (function? stream) :unavail res-body)
+   :error   curlcode
+   :handle  handle
+   :headers (text/parse-headers res-hdr)
+   :status  (handle :response-code)}) 
