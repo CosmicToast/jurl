@@ -57,8 +57,8 @@
   (each [k v] ps
     (put out k (let [o (out k)]
                  (cond
-                    (bytes? o)   (sorted [o v])
-                    (indexed? o) (sorted [;o v])
+                    (bytes? o)   [o v]
+                    (indexed? o) [;o v]
                     v))))
   (freeze out))
 
@@ -73,7 +73,7 @@
   However, if multiple headers with the same key are present, they are joined in a list
   Tuples are non-problematic since they do not modify content, unlike the "," approach.
 
-  Output is sorted by key, and multivalue lists are sorted by contents.
+  Output is sorted by key. Multivalue lists are in the order they appeared in.
   ``
   [s]
   (or (-?>> s
