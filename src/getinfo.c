@@ -128,7 +128,7 @@ JANET_CFUN(jurl_getinfo) {
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_wrap_integer(out);
 		}
-		case JURL_PARAMTYPE_ENUM:
+		case JURL_PARAMTYPE_ENUM: // TODO
 			janet_panic("jurl_getinfo: enums not implemented");
 		case JURL_PARAMTYPE_OFF_T: {
 			curl_off_t out;
@@ -136,9 +136,32 @@ JANET_CFUN(jurl_getinfo) {
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_wrap_integer(out);
 		}
-		case JURL_PARAMTYPE_SLIST:
-			janet_panic("jurl_getinfo: slists not implemented");
-		case JURL_PARAMTYPE_BITMASK:
+		case JURL_PARAMTYPE_SLIST: {
+			struct curl_slist *slist;
+			CURLcode res = curl_easy_getinfo(curl, opt->info, &slist);
+			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
+
+			// we iterate twice to avoid allocating n times
+			// for small n it makes no significant difference either way
+			// for large n it's faster to do that
+			int32_t len = 0;
+			struct curl_slist *tmp = slist;
+			while (tmp) {
+				tmp = tmp->next;
+				len++;
+			}
+			tmp = slist;
+
+			JanetArray *out = janet_array(len);
+			while (tmp) {
+				janet_array_push(out, janet_cstringv(tmp->data));
+				tmp = tmp->next;
+			}
+
+			curl_slist_free_all(slist);
+			return janet_wrap_array(out);
+		}
+		case JURL_PARAMTYPE_BITMASK: // TODO
 			janet_panic("jurl_getinfo: bitmasks not implemented");
 		case JURL_PARAMTYPE_BOOLEAN: {
 			long out;
