@@ -1,8 +1,17 @@
+(setdyn :doc
+        "Helper module to help deal with various text-based tasks.")
+
 # text helpers
 # parsing of text and generation of text
-(def keyword-lower (comp keyword string/ascii-lower))
+(def keyword-lower
+  ``Takes arbitrary bytes (buffer, keyword, or string), lowercases them,
+  then returns them as a keyword.
+  This is particularly useful for dealing with headers, which are
+  case-insensitive as per the spec.
+  ``
+  (comp keyword string/ascii-lower))
 
-(def header-pegs
+(def- header-pegs
   ~{:field-line (* ':field-name ":" :ows ':field-value :ows)
     :field-name :token
     :ws (set " \t")
@@ -40,9 +49,9 @@
 
     :field-line-crlf (/ (* :field-line :crlf) ,tuple)
     :main (* :start-line (any :field-line-crlf) :crlf)})
-(def header-peg (peg/compile header-pegs))
+(def- header-peg (peg/compile header-pegs))
 
-(defn from-pairs-merge
+(defn- from-pairs-merge
   [ps]
   (def out @{})
   (each [k v] ps
@@ -58,6 +67,14 @@
 # since they can all change the semantics
 # however, if I receive multiple headers of a given type, I join them in a list
 (defn parse-headers
+  ``Parses a header string (as written by curl's :headerfunction) into a header map.
+
+  Content is not parsed, including to split on ","s.
+  However, if multiple headers with the same key are present, they are joined in a list
+  Tuples are non-problematic since they do not modify content, unlike the "," approach.
+
+  Output is sorted by key, and multivalue lists are sorted by contents.
+  ``
   [s]
   (or (-?>> s
             (peg/match header-peg)
@@ -72,6 +89,12 @@
 
 # if you give me a list, I will split it into multiple instances of that header
 (defn header-list
+  ``Transforms a header map into a list compatible with :httpheader.
+
+  Values must either be bytes or a list of bytes.
+  In case of list, each entry in the list will be turned into a separate header
+  with the same key.
+  ``
   [& maps]
   (->> maps
        (mapcat pairs)
@@ -79,5 +102,4 @@
                           (map |(format-header k $) v)
                           (format-header k v))))
        flatten
-       sort
        freeze))
