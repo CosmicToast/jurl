@@ -109,6 +109,7 @@
   # cookies are complicated for many reasons
   # combine :cookielist and (:headers :set-cookie) to handle yourself
   (freeze {:body (if (function? stream) :unavail res-body)
+           :handle  handle
            :headers (text/parse-headers res-hdr)
            :status (handle :response-code)})) 
 
@@ -132,5 +133,6 @@
 # response format
 (comment {:body (or buffer
                     :unavail) # if stream = true
+          :handle  handle
           :headers dictionary
           :status 200})
