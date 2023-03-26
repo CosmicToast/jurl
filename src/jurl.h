@@ -49,6 +49,8 @@ struct jurl_cleanup *register_cleanup(struct jurl_cleanup **prev, enum jurl_clea
 
 // enums.c
 CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val);
+Janet jurl_getinfoenum(CURLINFO info, long code);
+Janet jurl_getinfomask(CURLINFO info, long code);
 
 // errors.c
 Janet jurl_geterror(CURLcode code);

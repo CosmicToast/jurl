@@ -1,6 +1,9 @@
-// enums.c: implements curl_easy_setopt options that take bitmasks or a specific value
+// enums.c: implements
+// * curl_easy_setopt options that take bitmasks or a specific value
+// * curl_easy_getinfo options that return bitmasks or a specific value
 #include "jurl.h"
 
+// setopt section
 struct jurl_enum {
 	CURLoption opt;
 	long value;
@@ -197,4 +200,102 @@ CURLcode jurl_setenum(jurl_handle *jurl, CURLoption opt, Janet val) {
 		}
 	}
 	return curl_easy_setopt(jurl->handle, opt, set);
+}
+
+// getinfo section
+struct jurl_info_enum {
+	CURLINFO info;
+	long code;
+	const char *keyword;
+};
+
+static struct jurl_info_enum info_enums[] = {
+	{CURLINFO_HTTP_VERSION, 0,                     "http-version/cannot-determine"},
+	{CURLINFO_HTTP_VERSION, CURL_HTTP_VERSION_1_0, "http-version/1.0"},
+	{CURLINFO_HTTP_VERSION, CURL_HTTP_VERSION_1_1, "http-version/1.1"},
+	{CURLINFO_HTTP_VERSION, CURL_HTTP_VERSION_2_0, "http-version/2.0"},
+	{CURLINFO_HTTP_VERSION, CURL_HTTP_VERSION_3,   "http-version/3"},
+
+	{CURLINFO_PROXY_ERROR, CURLPX_OK,                               "proxy-error/ok"},
+	{CURLINFO_PROXY_ERROR, CURLPX_BAD_ADDRESS_TYPE,                 "proxy-error/bad-address-type"},
+	{CURLINFO_PROXY_ERROR, CURLPX_BAD_VERSION,                      "proxy-error/bad-version"},
+	{CURLINFO_PROXY_ERROR, CURLPX_CLOSED,                           "proxy-error/closed"},
+	{CURLINFO_PROXY_ERROR, CURLPX_GSSAPI,                           "proxy-error/gssapi"},
+	{CURLINFO_PROXY_ERROR, CURLPX_GSSAPI_PERMSG,                    "proxy-error/gssapi-permsg"},
+	{CURLINFO_PROXY_ERROR, CURLPX_GSSAPI_PROTECTION,                "proxy-error/gssapi-protection"},
+	{CURLINFO_PROXY_ERROR, CURLPX_IDENTD,                           "proxy-error/identd"},
+	{CURLINFO_PROXY_ERROR, CURLPX_IDENTD_DIFFER,                    "proxy-error/identd-differ"},
+	{CURLINFO_PROXY_ERROR, CURLPX_LONG_HOSTNAME,                    "proxy-error/long-hostname"},
+	{CURLINFO_PROXY_ERROR, CURLPX_LONG_PASSWD,                      "proxy-error/long-passwd"},
+	{CURLINFO_PROXY_ERROR, CURLPX_LONG_USER,                        "proxy-error/long-user"},
+	{CURLINFO_PROXY_ERROR, CURLPX_NO_AUTH,                          "proxy-error/no-auth"},
+	{CURLINFO_PROXY_ERROR, CURLPX_RECV_ADDRESS,                     "proxy-error/recv-address"},
+	{CURLINFO_PROXY_ERROR, CURLPX_RECV_AUTH,                        "proxy-error/recv-auth"},
+	{CURLINFO_PROXY_ERROR, CURLPX_RECV_CONNECT,                     "proxy-error/connect"},
+	{CURLINFO_PROXY_ERROR, CURLPX_RECV_REQACK,                      "proxy-error/reqack"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_ADDRESS_TYPE_NOT_SUPPORTED, "proxy-error/reply-address-type-not-supported"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_COMMAND_NOT_SUPPORTED,      "proxy-error/reply-command-not-supported"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_CONNECTION_REFUSED,         "proxy-error/reply-connection-refused"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_GENERAL_SERVER_FAILURE,     "proxy-error/reply-general-server-failure"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_HOST_UNREACHABLE,           "proxy-error/reply-host-unreachable"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_NETWORK_UNREACHABLE,        "proxy-error/reply-network-unreachable"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_NOT_ALLOWED,                "proxy-error/reply-not-allowed"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_TTL_EXPIRED,                "proxy-error/reply-ttl-expired"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REPLY_UNASSIGNED,                 "proxy-error/reply-unassigned"},
+	{CURLINFO_PROXY_ERROR, CURLPX_REQUEST_FAILED,                   "proxy-error/request-failed"},
+	{CURLINFO_PROXY_ERROR, CURLPX_RESOLVE_HOST,                     "proxy-error/resolve-host"},
+	{CURLINFO_PROXY_ERROR, CURLPX_SEND_AUTH,                        "proxy-error/send-auth"},
+	{CURLINFO_PROXY_ERROR, CURLPX_SEND_CONNECT,                     "proxy-error/send-connect"},
+	{CURLINFO_PROXY_ERROR, CURLPX_SEND_REQUEST,                     "proxy-error/send-request"},
+	{CURLINFO_PROXY_ERROR, CURLPX_UNKNOWN_FAIL,                     "proxy-error/unknown-fail"},
+	{CURLINFO_PROXY_ERROR, CURLPX_UNKNOWN_MODE,                     "proxy-error/unknown-mode"},
+	{CURLINFO_PROXY_ERROR, CURLPX_USER_REJECTED,                    "proxy-error/user-rejected"},
+
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_BASIC,     "basic"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_DIGEST,    "digest"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_DIGEST_IE, "digest-ie"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_BEARER,    "bearer"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_NEGOTIATE, "negotiate"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_NTLM,      "ntlm"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_NTLM_WB,   "ntlm-wb"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_ANY,       "any"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_ANYSAFE,   "anysafe"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_ONLY,      "only"},
+	{CURLINFO_HTTPAUTH_AVAIL, CURLAUTH_AWS_SIGV4, "aws-sigv4"},
+
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_BASIC,     "basic"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_DIGEST,    "digest"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_DIGEST_IE, "digest-ie"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_BEARER,    "bearer"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_NEGOTIATE, "negotiate"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_NTLM,      "ntlm"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_NTLM_WB,   "ntlm-wb"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_ANY,       "any"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_ANYSAFE,   "anysafe"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_ONLY,      "only"},
+	{CURLINFO_PROXYAUTH_AVAIL, CURLAUTH_AWS_SIGV4, "aws-sigv4"},
+};
+#define jurl_info_size (sizeof(info_enums) / sizeof(struct jurl_info_enum))
+
+// these must be separate because the semantics differ greatly
+Janet jurl_getinfoenum(CURLINFO info, long code) {
+	for (size_t i = 0; i < jurl_info_size; i++) {
+		if (info_enums[i].info == info && info_enums[i].code == code) {
+			return janet_ckeywordv(info_enums[i].keyword);
+		}
+	}
+	janet_panicf("jurl_getinfo: unrecognized code for option %d: %d", info, code);
+}
+
+Janet jurl_getinfomask(CURLINFO info, long code) {
+	JanetArray *arr = janet_array(0);
+
+	for (size_t i = 0; i < jurl_info_size; i++) {
+		if (info_enums[i].info == info && (code & info_enums[i].code)) {
+			janet_array_ensure(arr, arr->count + 1, 1);
+			janet_array_push(arr, janet_ckeywordv(info_enums[i].keyword));
+		}
+	}
+
+	return janet_wrap_array(arr);
 }

@@ -115,30 +115,35 @@ JANET_CFUN(jurl_getinfo) {
 		janet_panic("could not find option to set in jurl_getinfo");
 	}
 
+	CURLcode res;
 	switch(opt->type) {
 		case JURL_PARAMTYPE_STRING: {
 			char *out;
-			CURLcode res = curl_easy_getinfo(curl, opt->info, &out);
+			res = curl_easy_getinfo(curl, opt->info, &out);
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_cstringv(out);
 		}
 		case JURL_PARAMTYPE_LONG: {
 			long out;
-			CURLcode res = curl_easy_getinfo(curl, opt->info, &out);
+			res = curl_easy_getinfo(curl, opt->info, &out);
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_wrap_integer(out);
 		}
-		case JURL_PARAMTYPE_ENUM: // TODO
-			janet_panic("jurl_getinfo: enums not implemented");
+		case JURL_PARAMTYPE_ENUM: {
+			long out;
+			res = curl_easy_getinfo(curl, opt->info, &out);
+			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
+			return jurl_getinfoenum(opt->info, out);
+		}
 		case JURL_PARAMTYPE_OFF_T: {
 			curl_off_t out;
-			CURLcode res = curl_easy_getinfo(curl, opt->info, &out);
+			res = curl_easy_getinfo(curl, opt->info, &out);
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_wrap_integer(out);
 		}
 		case JURL_PARAMTYPE_SLIST: {
 			struct curl_slist *slist;
-			CURLcode res = curl_easy_getinfo(curl, opt->info, &slist);
+			res = curl_easy_getinfo(curl, opt->info, &slist);
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 
 			// we iterate twice to avoid allocating n times
@@ -161,11 +166,16 @@ JANET_CFUN(jurl_getinfo) {
 			curl_slist_free_all(slist);
 			return janet_wrap_array(out);
 		}
-		case JURL_PARAMTYPE_BITMASK: // TODO
+		case JURL_PARAMTYPE_BITMASK: {
+			long out;
+			res = curl_easy_getinfo(curl, opt->info, &out);
+			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
+			return jurl_getinfomask(opt->info, out);
+		}
 			janet_panic("jurl_getinfo: bitmasks not implemented");
 		case JURL_PARAMTYPE_BOOLEAN: {
 			long out;
-			CURLcode res = curl_easy_getinfo(curl, opt->info, &out);
+			res = curl_easy_getinfo(curl, opt->info, &out);
 			if (res != CURLE_OK) janet_panic("getinfo returned != CURLE_OK");
 			return janet_wrap_boolean(out);
 		}
