@@ -1,5 +1,6 @@
 (import jurl/native)
 (import ./mime)
+(import ./text)
 (import ./writer)
 
 # global init on import
@@ -13,15 +14,6 @@
                          :followlocation   true
                          :postredir        :redir-post/all
                          :useragent        "Jurl/1.0"})
-
-(defn gen-headers
-  [& maps]
-  (->> maps
-       (mapcat pairs)
-       (map (fn [[k v]] (string/format "%s: %s" k v)))
-       sort
-       freeze))
-
 # useful for queries and x-www-urlencoded
 (defn url-encoded
   [dict]
@@ -31,8 +23,6 @@
                              (native/escape v)]))
            (map (fn [[k v]] (string/format "%s=%s" k v))))
       (string/join "&")))
-
-(def keyword-lower (comp keyword string/ascii-lower))
 
 (defn request
   [{:auth    auth
@@ -81,14 +71,18 @@
     
                (error "body must either be a mime to do a multipart form submission, a buffer/string, callback function, or dictionary to url-encode")))
 
-  # TODO: cookies
+  (when cookies
+    (pt :cookie (-> (->> cookies
+                         pairs
+                         (map (fn [[k v]] (string/format "%s=%s;" k v))))
+                    (string/join " "))))
 
   (when headers (cond
-                  (dictionary? headers) (pt :httpheader (gen-headers headers))
+                  (dictionary? headers) (pt :httpheader (text/header-list headers))
                   (indexed? headers)    (pt :httpheader headers)
                   (error "headers must be a dictionary or list")))
 
-  (when method (match (keyword-lower method)
+  (when method (match (text/keyword-lower method)
                  :get     (pt :httpget true)
                  :post    (pt :post true)
                  :put     (pt :upload true)
@@ -102,21 +96,20 @@
   
   (def res-body @"")
   (def res-hdr  @"")
-  (pt :writefunction  |(buffer/push res-body $))
   (pt :headerfunction |(buffer/push res-hdr  $))
-
-  # TODO: stream
+  (pt :writefunction (if (function? stream)
+                       stream
+                       |(buffer/push res-body $)))
   
   (when options (eachp [k v] options
                   (pt k v)))
   
   (:perform handle)
 
-  # TODO: cookies to map
-  # TODO: headers to map
-  (freeze {:body res-body
-           :cookies nil
-           :headers res-hdr
+  # cookies are complicated for many reasons
+  # combine :cookielist and (:headers :set-cookie) to handle yourself
+  (freeze {:body (if (function? stream) :unavail res-body)
+           :headers (text/parse-headers res-hdr)
            :status (handle :response-code)})) 
 
 # request format
@@ -139,6 +132,5 @@
 # response format
 (comment {:body (or buffer
                     :unavail) # if stream = true
-          :cookies dictionary
           :headers dictionary
           :status 200})
