@@ -21,6 +21,8 @@
 (var *default-options*
   "Default options to assign to handles automatically created by request."
   @{:autoreferer      true
+    # this activates the cookie parser in curl
+    :cookiefile       ""
     :default-protocol "https"
     :followlocation   true
     :postredir        :redir-post/all
@@ -207,9 +209,9 @@
   
   (def curlcode (:perform handle))
 
-  # cookies are complicated for many reasons
-  # combine :cookielist and (:headers :set-cookie) to handle yourself
+  # TODO: cookie list to map, merge given cookies if any
   {:body    (if (function? stream) :unavail res-body)
+   :cookies (handle :cookielist)
    :error   curlcode
    :handle  handle
    :headers (text/parse-headers res-hdr)
