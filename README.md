@@ -21,7 +21,7 @@ You can add it to your `project.janet` dependency list like so:
   :name "my-project"
   :dependencies
   [{:url "https://github.com/cosmictoast/jurl.git"
-    :tag "v1.0.0"}]
+    :tag "v1.1.0"}]
 ```
 
 This wraps around libcurl, and as such needs libcurl (library and headers for building) installed.
