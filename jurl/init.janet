@@ -222,3 +222,62 @@
    :handle  handle
    :headers (text/parse-headers res-hdr)
    :status  (handle :response-code)}) 
+
+# do as I say, not as I do
+# and I say, do not do this
+(defmacro- defapi
+  [name args & forms]
+  (with-syms [$nextfn $opts]
+    ~(defn ,name [,;args &opt ,$nextfn]
+       (default ,$nextfn request)
+       (fn [&opt ,$opts]
+         (default ,$opts {})
+         (,$nextfn (merge
+                     (do ,;forms)
+                     ,$opts))))))
+
+(defapi auth
+  [userpwd methods]
+  {:auth [userpwd methods]})
+
+(defapi body
+  [b]
+  {:body b})
+
+(defapi cookies
+  [ck]
+  {:cookies ck})
+
+# written manually to merge just the headers subfield
+(defn headers
+  [hdrs &opt nextfn]
+  (default nextfn request)
+  (fn [&opt opts]
+    (default opts {})
+    (nextfn (merge opts
+                   {:headers (merge
+                               hdrs
+                               (get opts :headers {}))}))))
+
+# I expect you to use this to start the request chain
+(defapi http
+  [method url]
+  {:method method
+   :url url})
+
+# TODO: defapi json; can I do this without depending on spork?
+
+# written manually to merge just the query subfield
+(defn query
+  [qs &opt nextfn]
+  (default nextfn request)
+  (fn [&opt opts]
+    (default opts {})
+    (nextfn (merge opts
+                   {:query (merge
+                             qs
+                             (get opts :query {}))}))))
+
+(defapi url
+  [u]
+  {:url u})
