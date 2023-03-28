@@ -2,6 +2,9 @@
 (import ./mime)
 (import ./text)
 
+# used for 'json exclusively
+(import spork/json)
+
 (setdyn :doc
         ````Janet cURL: a convenient and complete http client for janet.
 
@@ -227,10 +230,20 @@
                   (error "headers must be a dictionary or list")))
 
   (when (and method remethod)
+    # some methods always expect a body to be present
+    (def emptybody |(when (not body)
+                       (pt :readfunction (fn [bytes] ""))))
     (case (text/keyword-lower method)
      :get     (pt :httpget true)
-     :post    (pt :post true)
-     :put     (pt :upload true)
+     :post    (do
+                # curl expects POST to always have a body
+                (emptybody)
+                (pt :post true))
+     :put     (do
+                # curl expects PUT to always have a body
+                (emptybody)
+                (pt :post true)
+                (pt :customrequest "PUT"))
      :head    (pt :nobody true)
      :delete  (pt :customrequest "DELETE")
      :patch   (pt :customrequest "PATCH")
@@ -307,6 +320,20 @@
   [b]
   {:body b})
 
+(defapi body-type
+  ``Adds a body to the request like `body`,
+  while also specifying its content-type.
+  ``
+  [b ct]
+  {:body b :headers {:content-type ct}})
+
+(defapi body-plain
+  ``Adds a body to the request like `body`,
+  while specifying it to be plain text.
+  ``
+  [b]
+  {:body b :headers {:content-type :text/plain}})
+
 (defapi cookies
   ``Adds any amount of cookies to the request.
   This is *additive*, so any cookies you add do not erase older ones.
@@ -338,16 +365,14 @@
   {:method method
    :url url})
 
-# TODO: defapi json; can I do this without depending on spork?
-(comment (defapi json
-           ``Sets the body of the request to the json representation of ds.
-           Also sets the content-type header for you.
+(defapi json
+  ``Sets the body of the request to the json representation of ds.
+  Also sets the content-type header for you.
 
-           Example: `(json {:json-key "json-value"})`
-           ``
-           [ds]
-           {:body (json/encode ds)
-            :headers {:content-type "application/json"}}))
+  Example: `(json {:json-key "json-value"})`
+  ``
+  [ds]
+  {:body (json/encode ds) :headers {:content-type :application/json}})
 
 (defapi oauth
   ``Sets up authentication for the request using an oauth bearer token.
