@@ -75,8 +75,10 @@ static const struct jurl_opt jurl_opts[] = {
 	// SKIP: lastsocket: deprecated for activesocket
 	// SKIP: activesocket: complex representation
 	{CURLINFO_FTP_ENTRY_PATH,            "ftp-entry-path",          JURL_PARAMTYPE_STRING},
+#if CURL_AT_LEAST_VERSION(7,84,0)
 	{CURLINFO_CAPATH,                    "capath",                  JURL_PARAMTYPE_STRING},
 	{CURLINFO_CAINFO,                    "cainfo",                  JURL_PARAMTYPE_STRING},
+#endif
 	// SKIP: certinfo: complex representation
 	// SKIP: tls-ssl-ptr: complex representation
 	// SKIP: tls-session: deprecated for tls-ssl-ptr

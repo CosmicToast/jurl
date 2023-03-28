@@ -105,7 +105,9 @@ static const struct jurl_error jurl_errors[] = {
 	{CURLE_QUIC_CONNECT_ERROR,       "error/quic-connect-error"},
 	{CURLE_PROXY,                    "error/proxy"},
 	{CURLE_SSL_CLIENTCERT,           "error/ssl-clientcert"},
+#if CURL_AT_LEAST_VERSION(7,85,0)
 	{CURLE_UNRECOVERABLE_POLL,       "error/unrecoverable-poll"},
+#endif
 };
 #define jurl_error_size (sizeof(jurl_errors) / sizeof(struct jurl_error))
 
