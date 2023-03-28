@@ -67,6 +67,8 @@
       non-recursively.
       The effective result is similar to passing bytes otherwise.
     * `[...]` equivalent to (mime/new ...) without needing to import jurl/mime.
+  * client: a handle to a <jurl> abstract type, gotten from jurl/native/new.
+    If this is specified, default options are not applied.
   * cookies: a dictionary of cookies to give to curl.
   * headers: a dictionary of headers to give to curl.
     Any given header value may be a list, in which case multiple headers will
@@ -121,14 +123,14 @@
   ````
   [{:auth    auth
     :body    body
+    :client  handle
     :cookies cookies
     :headers headers
     :method  method
     :options options
     :query   query
     :stream  stream
-    :url     url}
-   &opt handle]
+    :url     url}]
 
   (assert (bytes? url) "url must be present and a string")
   (def handle (or handle
