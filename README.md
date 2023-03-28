@@ -22,7 +22,7 @@ You can add it to your `project.janet` dependency list like so:
   :name "my-project"
   :dependencies
   [{:url "https://github.com/cosmictoast/jurl.git"
-	:tag "v1.0.0"}]
+    :tag "v1.0.0"}]
 ```
 
 This wraps around libcurl, and as such needs libcurl (library and headers for building) installed.
@@ -61,20 +61,20 @@ Here are a few basic examples.
 # equivalent to the previous example
 ((->> "https://pie.dev/post"
       (http :post)
-	  (body "my body")
-	  (headers {:content-type "text/plain"})))
+      (body "my body")
+      (headers {:content-type "text/plain"})))
 ```
 
 ```janet
 # example of preparing and modifying a request
 (def req (->> "https://pie.dev/post"
               (http :post)
-			  (body "my body")
-			  (headers {:content-type "application/octet-stream"})))
+              (body "my body")
+              (headers {:content-type "application/octet-stream"})))
 # oops I want it to be application/json
 (def req2 (->> req
                (headers {:content-type "application/json"
-			             :custom-header "custom-value"})))
+                         :custom-header "custom-value"})))
 # you can still use the old prepared request
 (req) # => {:body ...}
 # actually, in the end, I want text/plain
