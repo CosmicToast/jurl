@@ -11,7 +11,6 @@ However, for 90+% of use-cases, it should be more than sufficient,
 and is far more complete and convenient than most http clients I've worked with so far, including in other languages.
 
 For examples of the various APIs, see the tests!
-P.S. There are no tests yet, soon though.
 
 ## Installation
 `jpm install https://github.com/cosmictoast/jurl.git`

@@ -1,0 +1,11 @@
+(use ../../../jurl)
+(import spork/json)
+(def body "hi")
+(def res ((->> "https://pie.dev/anything"
+               (http :patch)
+               (body-plain body))))
+(assert (= 200 (res :status)))
+(def bres (json/decode (res :body) true))
+(assert (= "PATCH" (bres :method)))
+(assert (= body (bres :data)))
+(assert (= "text/plain" (get-in bres [:headers :Content-Type])))
