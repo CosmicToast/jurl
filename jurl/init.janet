@@ -3,14 +3,46 @@
 (import ./text)
 
 (setdyn :doc
-        ``Janet cURL: a convenient and complete http client for janet.
+        ````Janet cURL: a convenient and complete http client for janet.
 
-        Important syms are:
-        * `*default-options*`
-        * request
+        The medium-level API to build your own higher level one is available
+        via the `*default-options*` var and the `request` function.
+
+        For the everyday user, use all of the functions defined using `defapi`.
+        All of those return a function that may either be further transformed,
+        or called directly to perform the request.
+
+        For example:
+        ```
+        # define a request to pie.dev/post
+        (def req (->> "https://pie.dev/post"
+                      # it should be a POST
+                      (http :post)
+                      # pass ?a=b in the url queries
+                      (query {:a :b})
+                      # pass an x-www-url-encoded body c=d
+                      (body {:c :d})
+                      # pass a header "my-header: value"
+                      (headers {:my-header "value"})))
+        # you can now execute the request
+        (req) # => {:body ... :status 200}
+        # you can execute the request however many times you want
+        (req) # => {:body ... :status 200}
+        # you can also modify it further
+        (def req2 (->> req
+                       # pass an *additional* header "my-header2: value2"
+                       (headers {:my-header2 "value2"})))
+        # the old request is still valid
+        (req) # => {:body ... :status 200}
+        # the new one is also usable
+        (req2) # => {:body ... :status 200}
+        # you can quickly perform a lookup without assigning by calling the
+        # value immediately
+        ((http :get "https://pie.dev/get")) # => {:body ... :status 200}
+        ```
 
         A maximally complete close-to-source native wrapper also available in `jurl/native`.
-        ``)
+        ````)
 
 # global init on import
 (let [g (native/global-init)]
