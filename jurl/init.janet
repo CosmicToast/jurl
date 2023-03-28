@@ -155,9 +155,12 @@
 
                (error "auth must either be a user:password string or [user:password [:valid :methods]]")))
 
+  (var remethod true)
   (when body (match body
                (amime (= :jurl-mime (type amime) :amime))
-               (pt :mimepost amime)
+               (do
+                 (set remethod false)
+                 (pt :mimepost amime))
 
                (bytes (bytes? bytes))
                (pt :postfields bytes)
@@ -170,7 +173,9 @@
                (pt :postfields (url-encoded dict))
 
                (indx (indexed? indx))
-               (pt :mimepost (mime/new handle ;indx))
+               (do
+                 (set remethod false)
+                 (pt :mimepost (mime/new handle ;indx)))
     
                (error "body must either be a mime to do a multipart form submission, a buffer/string, callback function, a list of mime parts, or dictionary to url-encode")))
 
@@ -185,17 +190,18 @@
                   (indexed? headers)    (pt :httpheader headers)
                   (error "headers must be a dictionary or list")))
 
-  (when method (case (text/keyword-lower method)
-                 :get     (pt :httpget true)
-                 :post    (pt :post true)
-                 :put     (pt :upload true)
-                 :head    (pt :nobody true)
-                 :delete  (pt :customrequest "DELETE")
-                 :patch   (pt :customrequest "PATCH")
-                 :options (pt :customrequest "OPTIONS")
-                 :connect (pt :customrequest "CONNECT")
-                 :trace   (pt :customrequest "TRACE")
-                 (error "method must be one of :get :post :put :head :delete :patch :options :connect :trace")))
+  (when (and method remethod)
+    (case (text/keyword-lower method)
+     :get     (pt :httpget true)
+     :post    (pt :post true)
+     :put     (pt :upload true)
+     :head    (pt :nobody true)
+     :delete  (pt :customrequest "DELETE")
+     :patch   (pt :customrequest "PATCH")
+     :options (pt :customrequest "OPTIONS")
+     :connect (pt :customrequest "CONNECT")
+     :trace   (pt :customrequest "TRACE")
+     (error "method must be one of :get :post :put :head :delete :patch :options :connect :trace")))
   
   (def res-body @"")
   (def res-hdr  @"")
