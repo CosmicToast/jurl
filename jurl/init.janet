@@ -91,6 +91,8 @@
   The return value is a struct that represents the response.
   It holds the following keys:
   * body: either the body of the response, or :unavail if :stream was used.
+  * cookies: a list of cookies as returned by curl. You can also consult the
+    set-cookies header field.
   * error: the CURLcode response from curl. :ok under normal circumstances.
     You can get a fancy string out of this using `native/strerror`.
   * handle: the underlying native curl handle.
@@ -239,9 +241,11 @@
 # do as I say, not as I do
 # and I say, do not do this
 (defmacro- defapi
-  [name args & forms]
+  [name docstring args & forms]
   (with-syms [$nextfn $opts]
-    ~(defn ,name [,;args &opt ,$nextfn]
+    ~(defn ,name
+       ,docstring
+       [,;args &opt ,$nextfn]
        (default ,$nextfn request)
        (fn [&opt ,$opts]
          (default ,$opts {})
@@ -250,37 +254,87 @@
                      ,$opts))))))
 
 (defapi auth
+  ``Adds authentication to the request.
+  Takes a string in the format "user:password" and a list of allowed methods.
+
+  For a list of possible methods, see `CURLOPT_HTTPAUTH(3)`.
+
+  Example: `(auth "admin:secret" [:basic])`.
+  ``
   [userpwd methods]
   {:auth [userpwd methods]})
 
 (defapi body
+  ``Adds a body to the request.
+  Semantics are identical to the `body` key in `request`.
+
+  Note that this may change the method type.
+
+  Example: `(body "request body")`
+  ``
   [b]
   {:body b})
 
 (defapi cookies
+  ``Adds any amount of cookies to the request.
+  This is *additive*, so any cookies you add do not erase older ones.
+  Cookies with the same keys do overwrite previous ones, though.
+
+  Example: `(cookies {:custom-session "57 id"})`
+  ``
   [ck]
   {:cookies ck})
 
 (defapi headers
+  ``Adds any amount of headers to the request.
+  This is *additive*, so any headers you add do not erase previous ones.
+  Headers with the same keys do overwrite previous ones, though.
+
+  Example: `(headers {:my-custom-header "my header value"})`
+  ``
   [hdrs]
   {:headers hdrs})
 
 # I expect you to use this to start the request chain
 (defapi http
+  ``Sets the url and method of an http request.
+  This is generally expected to be the pipeline entry point.
+
+  Example: `(http :get "https://pie.dev/get")`
+  ``
   [method url]
   {:method method
    :url url})
 
 # TODO: defapi json; can I do this without depending on spork?
 (comment (defapi json
+           ``Sets the body of the request to the json representation of ds.
+           Also sets the content-type header for you.
+
+           Example: `(json {:json-key "json-value"})`
+           ``
            [ds]
            {:body (json/encode ds)
             :headers {:content-type "application/json"}}))
 
+(defapi oauth
+  ``Sets up authentication for the request using an oauth bearer token.
+  Usage of this is not required, you can set custom headers yourself using
+  `header` just as well.
+
+  Example: `(oauth "1ab9cb22ba269a7")`
+  ``
+  [bearer]
+  {:options {:xoauth2-bearer bearer}})
+
 (defapi query
+  ``Adds any amount of queries to the request.
+  This is *additive*, so any query arguments you add do not erase older ones.
+  Query arguments with the same keys do overwrite previous ones, though.
+
+  Note that overwriting the url does not erase queries.
+
+  Example: `(query {:query "spaces work"})`
+  ``
   [qs]
   {:query qs})
-
-(defapi url
-  [u]
-  {:url u})
