@@ -225,6 +225,17 @@
    :headers (text/parse-headers res-hdr)
    :status  (handle :response-code)}) 
 
+(defn- merge-request
+  [orig new]
+  (let [mdict |(merge (get orig $ {}) (get new $ {}))]
+    # by default, we merge
+    (merge (merge orig new)
+           # custom merge targets are
+           {:cookies (mdict :cookies)
+            :headers (mdict :headers)
+            :options (mdict :options)
+            :query   (mdict :query)})))
+
 # do as I say, not as I do
 # and I say, do not do this
 (defmacro- defapi
@@ -234,7 +245,7 @@
        (default ,$nextfn request)
        (fn [&opt ,$opts]
          (default ,$opts {})
-         (,$nextfn (merge
+         (,$nextfn (merge-request
                      (do ,;forms)
                      ,$opts))))))
 
@@ -250,16 +261,9 @@
   [ck]
   {:cookies ck})
 
-# written manually to merge just the headers subfield
-(defn headers
-  [hdrs &opt nextfn]
-  (default nextfn request)
-  (fn [&opt opts]
-    (default opts {})
-    (nextfn (merge opts
-                   {:headers (merge
-                               hdrs
-                               (get opts :headers {}))}))))
+(defapi headers
+  [hdrs]
+  {:headers hdrs})
 
 # I expect you to use this to start the request chain
 (defapi http
@@ -268,17 +272,14 @@
    :url url})
 
 # TODO: defapi json; can I do this without depending on spork?
+(comment (defapi json
+           [ds]
+           {:body (json/encode ds)
+            :headers {:content-type "application/json"}}))
 
-# written manually to merge just the query subfield
-(defn query
-  [qs &opt nextfn]
-  (default nextfn request)
-  (fn [&opt opts]
-    (default opts {})
-    (nextfn (merge opts
-                   {:query (merge
-                             qs
-                             (get opts :query {}))}))))
+(defapi query
+  [qs]
+  {:query qs})
 
 (defapi url
   [u]
