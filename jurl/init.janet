@@ -35,7 +35,7 @@
            pairs
            (map (fn [[k v]] [(native/escape k)
                              (native/escape v)]))
-           (map (fn [[k v]] (string/format "%s=%s" k v))))
+           (map (fn [[k v]] (string/format "%V=%V" k v))))
       (string/join "&")))
 
 (defn request
@@ -177,7 +177,7 @@
   (when cookies
     (pt :cookie (-> (->> cookies
                          pairs
-                         (map (fn [[k v]] (string/format "%s=%s;" k v))))
+                         (map (fn [[k v]] (string/format "%V=%V;" k v))))
                     (string/join " "))))
 
   (when headers (cond

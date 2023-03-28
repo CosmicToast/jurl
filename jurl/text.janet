@@ -85,7 +85,7 @@
 
 (defn- format-header
   [k v]
-  (string/format "%s: %s" k v))
+  (string/format "%V: %V" k v))
 
 # if you give me a list, I will split it into multiple instances of that header
 (defn header-list

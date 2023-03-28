@@ -41,7 +41,7 @@
   (when headers  (:headers  handle
                             (->> headers
                                  pairs
-                                 (map (fn [[k v]] (string/format "%s: %s" k v)))
+                                 (map (fn [[k v]] (string/format "%V: %V" k v)))
                                  sort
                                  freeze))))
 
