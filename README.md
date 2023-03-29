@@ -32,6 +32,10 @@ Not all features are gated behind version flags, patches welcome.
 A few features are not implemented, grep for "not implemented" and "SKIP".
 I'm open to implementing what's left, but it's generally very niche things, such as ioctl callbacks.
 
+The package is sensitive to curl versions.
+It should work with any version >7.81.0, and has been tested against 7.85.0, 7.86.0, and 8.0.1.
+If you run into issues with building, please see the CONTRIBUTING document - chances are I can help fix it.
+
 ## Jurl
 `jurl` is a requests-style API, but more complete.
 You can use the `jurl/request` function directly (see its documentation for more details),
