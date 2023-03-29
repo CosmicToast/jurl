@@ -382,7 +382,7 @@
   Example: `(oauth "1ab9cb22ba269a7")`
   ``
   [bearer]
-  {:options {:xoauth2-bearer bearer}})
+  {:options {:httpauth [:bearer] :xoauth2-bearer bearer}})
 
 (defapi query
   ``Adds any amount of queries to the request.
