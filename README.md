@@ -20,9 +20,13 @@ You can add it to your `project.janet` dependency list like so:
 (declare-project
   :name "my-project"
   :dependencies
-  [{:url "https://github.com/cosmictoast/jurl.git"
+  [{:repo "https://github.com/cosmictoast/jurl.git"
     :tag "v1.1.0"}]
 ```
+
+`jurl` is also available in the `jpm` package list.
+This means you can also install it with `jpm install jurl`, and use
+`:repo "jurl"` in your dependencies list.
 
 This wraps around libcurl, and as such needs libcurl (library and headers for building) installed.
 Tested on linux and macos.
