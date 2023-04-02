@@ -60,7 +60,7 @@ static const JanetAbstractType jurl_type = {
 JANET_CFUN(jurl_dup) {
 	janet_fixarity(argc, 1);
 	jurl_handle *jurl = janet_getjurl(argv, 0);
-	jurl_handle *newj = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl));
+	jurl_handle *newj = (jurl_handle*)janet_abstract(&jurl_type, sizeof(jurl_handle));
 	newj->handle = curl_easy_duphandle(jurl->handle);
 	return janet_wrap_abstract(newj);
 }
