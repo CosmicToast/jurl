@@ -21,7 +21,7 @@ You can add it to your `project.janet` dependency list like so:
   :name "my-project"
   :dependencies
   [{:repo "https://github.com/cosmictoast/jurl.git"
-    :tag "v1.1.2"}]
+    :tag "v1.1.3"}]
 ```
 
 `jurl` is also available in the `jpm` package list.
