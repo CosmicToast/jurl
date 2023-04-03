@@ -4,7 +4,7 @@
 int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n) {
 	JanetView args = janet_getindexed(argv, n);
 	for (int32_t i = 0; i< args.len; i++) {
-		const char *s = janet_getcstring(args.items, i);
+		const char *s = janet_getcbytes(args.items, i);
 		struct curl_slist *newlist = curl_slist_append(*slist, s);
 		if (!newlist) {
 			return 0;
@@ -12,6 +12,14 @@ int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n) {
 		*slist = newlist;
 	}
 	return 1;
+}
+
+const char *janet_getcbytes(const Janet *argv, int32_t n) {
+	JanetByteView b = janet_getbytes(argv, n);
+	if (strlen((const char*) b.bytes) != (size_t) b.len) {
+		janet_panic("bytes contain embedded 0s");
+	}
+	return (const char*)b.bytes;
 }
 
 JANET_CFUN(jurl_escape) {

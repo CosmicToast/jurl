@@ -106,7 +106,7 @@ JANET_CFUN(jurl_mime_name) {
 	if (janet_checktype(argv[1], JANET_NIL)) {
 		ret = curl_mime_name(part->mimepart, NULL);
 	} else {
-		const char *s = (const char*)janet_getcstring(argv, 1);
+		const char *s = (const char*)janet_getcbytes(argv, 1);
 		ret = curl_mime_name(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
@@ -198,7 +198,7 @@ JANET_CFUN(jurl_mime_filedata) {
 	if (janet_checktype(argv[1], JANET_NIL)) {
 		ret = curl_mime_filedata(part->mimepart, NULL);
 	} else {
-		const char *s = (const char*)janet_getcstring(argv, 1);
+		const char *s = (const char*)janet_getcbytes(argv, 1);
 		ret = curl_mime_filedata(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
@@ -211,7 +211,7 @@ JANET_CFUN(jurl_mime_filename) {
 	if (janet_checktype(argv[1], JANET_NIL)) {
 		ret = curl_mime_filename(part->mimepart, NULL);
 	} else {
-		const char *s = (const char*)janet_getcstring(argv, 1);
+		const char *s = (const char*)janet_getcbytes(argv, 1);
 		ret = curl_mime_filename(part->mimepart, s);
 	}
 	return jurl_geterror(ret);
@@ -224,7 +224,7 @@ JANET_CFUN(jurl_mime_type) {
 	if (janet_checktype(argv[1], JANET_NIL)) {
 		ret = curl_mime_type(part->mimepart, NULL);
 	} else {
-		const char *s = (const char*)janet_getcstring(argv, 1);
+		const char *s = (const char*)janet_getcbytes(argv, 1);
 		ret = curl_mime_type(part->mimepart, s);
 	}
 	return jurl_geterror(ret);

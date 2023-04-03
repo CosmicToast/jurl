@@ -90,6 +90,7 @@ JANET_CFUN(jurl_setopt);
 
 // util.c
 int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n);
+const char *janet_getcbytes(const Janet *argv, int32_t n);
 JANET_CFUN(jurl_escape);
 JANET_CFUN(jurl_unescape);
 JANET_CFUN(jurl_wrap_error);

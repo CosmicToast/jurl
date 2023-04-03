@@ -413,7 +413,7 @@ JANET_CFUN(jurl_setopt) {
 					));
 			} else {
 				return jurl_geterror(
-					curl_easy_setopt(jurl->handle, opt->opt, janet_getcstring(argv, 2)
+					curl_easy_setopt(jurl->handle, opt->opt, janet_getcbytes(argv, 2)
 					));
 			}
 			break;
