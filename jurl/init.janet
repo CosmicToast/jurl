@@ -420,7 +420,7 @@
 
   Can also take the following named parameters:
   * opts: Options to intelligently merge with the resulting query. 
-          To see what can go into opts, see the docs for `request`.
+    To see what can go into opts, see the docs for `request`.
   ```
   [url &named opts]
   (verify-slurpit
@@ -439,7 +439,7 @@
   Can also take the following named parameters:
   * content-type: The content type to set. Defaults to `text/plain`.
   * opts: Options to intelligently merge with the resulting query. 
-          To see what can go into opts, see the docs for `request`.
+    To see what can go into opts, see the docs for `request`.
   ```
   [url body &named content-type opts]
   (default content-type "text/plain")
