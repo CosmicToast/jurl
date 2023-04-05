@@ -418,5 +418,5 @@
   (verify-slurpit
     (->> url
          (http :post)
-         (body body))
+         (body-plain body))
     opts))
