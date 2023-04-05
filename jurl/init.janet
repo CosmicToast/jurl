@@ -21,6 +21,9 @@
 
         For example:
         ```
+        (slurp "https://pie.dev/get") # also see: spit
+        # => response body
+
         # define a request to pie.dev/post
         (def req (->> "https://pie.dev/post"
                       # it should be a POST
