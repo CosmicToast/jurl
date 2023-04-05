@@ -272,6 +272,19 @@
    :headers (text/parse-headers res-hdr)
    :status  (handle :response-code)}) 
 
+# fast and convenient functions
+(defn slurp
+  [url &opt opts]
+  (default opts {})
+  (def out (request (merge opts {:url url})))
+  (assert (= :ok (out :error)))
+  (out :body))
+
+(defn spit
+  [url body &opt opts]
+  (default opts {})
+  (def out (request (merge opts {:url url :method :post :body body}))))
+
 (defn- merge-request
   [orig new]
   (let [mdict |(merge (get orig $ {}) (get new $ {}))]
