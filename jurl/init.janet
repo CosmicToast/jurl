@@ -8,6 +8,10 @@
 (setdyn :doc
         ````Janet cURL: a convenient and complete http client for janet.
 
+        The fastest way to get started is using the `slurp` and `spit` functions.
+        `slurp` corresponds to an HTTP GET, and `spit` to an HTTP POST.
+        For extra details, see their documentation.
+
         The medium-level API to build your own higher level one is available
         via the `*default-options*` var and the `request` function.
 
@@ -396,7 +400,6 @@
   [qs]
   {:query qs})
 
-# fast and convenient functions
 (defn- verify-slurpit
   [f &opt opts]
   (def out (f opts))
@@ -408,15 +411,40 @@
   (out :body))
 
 (defn slurp
-  [url &opt opts]
+  ```Performs an HTTP GET to `url`.
+
+  It will throw an error in case the request doesn't succeed,
+  else return the request body.
+  A failed request is defined as a request that returns a curl error
+  or a non-2xx HTTP response code.
+
+  Can also take the following named parameters:
+  * opts: Options to intelligently merge with the resulting query. 
+          To see what can go into opts, see the docs for `request`.
+  ```
+  [url &named opts]
   (verify-slurpit
     (http :get url)
     opts))
 
 (defn spit
-  [url body &opt opts]
+  ```Performs an HTTP POST to `url` with the body `body`.
+  By default, uses the `text/plain` content type.
+
+  It will throw an error in case the request doesn't succeed,
+  else return the request body.
+  A failed request is defined as a request that returns a curl error
+  or a non-2xx HTTP response code.
+
+  Can also take the following named parameters:
+  * content-type: The content type to set. Defaults to `text/plain`.
+  * opts: Options to intelligently merge with the resulting query. 
+          To see what can go into opts, see the docs for `request`.
+  ```
+  [url body &named content-type opts]
+  (default content-type "text/plain")
   (verify-slurpit
     (->> url
          (http :post)
-         (body-plain body))
+         (body-type body content-type))
     opts))

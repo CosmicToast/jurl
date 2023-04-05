@@ -42,10 +42,32 @@ If you run into issues with building, please see the CONTRIBUTING document - cha
 
 ## Jurl
 `jurl` is a requests-style API, but more complete.
-You can use the `jurl/request` function directly (see its documentation for more details),
-or the pipeline high level API.
 
-Here are a few basic examples.
+You can use the `jurl/request` function directly (see its documentation for more details),
+`slurp` and `spit` for very basic http requests, or the pipeline high level API.
+
+Here are examples of `slurp` and `spit`:
+```janet
+(slurp "https://pie.dev/get")
+# => @"{\"args\": {} ..."
+
+(slurp "https://example.com/404")
+# => (error 404)
+
+(slurp "https://example.com/nxdomain")
+# => (error :error/...)
+
+(spit "https://pie.dev/post" "post body")
+# => @"{... \"data\": \"post body\" ...}"
+
+(spit "https://pie.dev/post" `{"key": "value"}` :content-type :application/json)
+# => @"{ ... \"json\": {\"key\": \"value\"} ...}"
+
+(spit "https://pie.dev/post" (slurp "https://pie.dev/get") :content-type :application/json)
+# => ...
+```
+
+Here are a few basic examples of the pipeline API.
 ```janet
 # prepare and execute a GET to pie.dev/get
 ((http :get "https://pie.dev/get"))
@@ -77,16 +99,16 @@ Here are a few basic examples.
 (def req (->> "https://pie.dev/post"
               (http :post)
               (body "my body")
-              (headers {:content-type "application/octet-stream"})))
+              (headers {:content-type :application/octet-stream})))
 # oops I want it to be application/json
 (def req2 (->> req
-               (headers {:content-type "application/json"
+               (headers {:content-type :application/json
                          :custom-header "custom-value"})))
 # you can still use the old prepared request
 (req) # => {:body ...}
 # actually, in the end, I want text/plain
 # note that custom-header is still set
-(req2 {:headers {:content-type "text/plain"}})
+(req2 {:headers {:content-type :text/plain}})
 # => {:body ...}
 ```
 
