@@ -21,7 +21,7 @@ You can add it to your `project.janet` dependency list like so:
   :name "my-project"
   :dependencies
   [{:repo "https://github.com/cosmictoast/jurl.git"
-    :tag "v1.1.3"}]
+    :tag "v1.2.0"}]
 ```
 
 `jurl` is also available in the `jpm` package list.
@@ -67,7 +67,7 @@ Here are examples of `slurp` and `spit`:
 # => ...
 ```
 
-Here are a few basic examples of the pipeline API.
+Here are a few basic examples of the pipeline API:
 ```janet
 # prepare and execute a GET to pie.dev/get
 ((http :get "https://pie.dev/get"))
