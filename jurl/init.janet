@@ -80,6 +80,16 @@
            (map (fn [[k v]] (string/format "%V=%V" k v))))
       (string/join "&")))
 
+(defn- append-part
+  [base add]
+  (var slashes 0)
+  (when (string/has-suffix? "/" base) (++ slashes))
+  (when (string/has-prefix? "/" add)  (++ slashes))
+  (case slashes
+    0 (string base "/" add)
+    1 (string base add)
+    2 (string base (slice add 1))))
+
 (defn request
   ````Performs a request as specified by the options.
   The only required parameter is url.
@@ -120,6 +130,10 @@
   * options: a dictionary of options to apply to the handle.
     For the list of available options, consult `curl_easy_setopt(3)`.
     For the list of options that are not implemented, see `src/setopt.c`.
+  * parts: a list of parts to append to the url.
+    This allows you to make clients more easily.
+    As of currently, this does not extract or check for fragment or query.
+    As such, using `parts` along with a url that contains either is erroneous.
   * query: a dictionary of query values to add to the url.
     You can both specify query values in the url string and in here.
     In case the same value appears in both, both will appear in the final url,
@@ -172,6 +186,7 @@
     :headers headers
     :method  method
     :options options
+    :parts   parts
     :query   query
     :stream  stream
     :url     url}]
@@ -184,11 +199,16 @@
                     h)))
   (def pt (partial put handle))
 
-  (if query
-    (pt :url (string url
-                     (if (string/find "?" url) "&" "?")
-                     (url-encoded query)))
-    (pt :url url))
+  (var url url)
+  (when parts (each part parts
+                (set url (append-part url part))))
+
+  (when query (set url
+                   (string url
+                            (if (string/find "?" url) "&" "?")
+                            (url-encoded query))))
+
+  (pt :url url)
 
   (when auth (match auth
                (userpwd (bytes? userpwd))
@@ -281,13 +301,15 @@
 
 (defn- merge-request
   [orig new]
-  (let [mdict |(merge (get orig $ {}) (get new $ {}))]
+  (let [mdict |(merge (get orig $ {}) (get new $ {}))
+        mlist |[;(get orig $ []) ;(get new $ [])]]
     # by default, we merge
     (merge (merge orig new)
            # custom merge targets are
            {:cookies (mdict :cookies)
             :headers (mdict :headers)
             :options (mdict :options)
+            :parts   (mlist :parts)
             :query   (mdict :query)})))
 
 # do as I say, not as I do
@@ -304,6 +326,33 @@
          (,$nextfn (merge-request
                      (do ,;forms)
                      ,$opts))))))
+
+(defapi append-path
+  ````
+  Appends a path component to the url.
+  This is primarily useful for building clients.
+
+  Note that it is the caller's responsibility to ensure the base url exists
+  and does not contain a query or a fragment.
+
+  Example:
+  ```
+  (def base "https://example.com/api")
+  (def base* "https://example.com/api/")
+  # all of the below are equivalent to passing "https://example.com/api/users"
+  # as the original url
+  (append-path base  "users")
+  (append-path base  "/users")
+  (append-path base* "users")
+  (append-path base* "/users")
+  # this is equivalent to passing "https://example.com/api/users/me"
+  (->> base
+       (append-path "users")
+       (append-path "me"))
+  ```
+  ````
+  [path]
+  {:parts [path]})
 
 (defapi auth
   ``Adds authentication to the request.
