@@ -25,20 +25,29 @@
                (fn pkgconf
                  [defval & args]
                  (if bin
-                   (string/split " " (-> bin
-                                         (execute ;args)
-                                         (get :out)
-                                         (string/trim)))
+                   (->> (-> bin
+                            (execute ;args)
+                            (get :out)
+                            string/trim)
+                        (string/split " ")
+                        (filter |(< 0 (length $))))
                    defval))))
-(def curl-cflags  (pkgconf []
-                           "libcurl" "--cflags" "--static"))
-(def curl-ldflags (pkgconf ["-lcurl"]
-                           "libcurl" "--libs" "--static"))
+(def {:cflags  curl-cflags
+      :ldflags curl-ldflags}
+  (let [cflags  (partial pkgconf []         "libcurl" "--cflags")
+        ldflags (partial pkgconf ["-lcurl"] "libcurl" "--libs")
+        curl-c  (cflags)
+        curl-l  (ldflags)
+        scurl-c (cflags "--static")
+        scurl-l (cflags "--static")]
+    # TODO: test scurl-c and scurl-l to pass those if applicable
+    {:cflags  curl-c
+     :ldflags curl-l}))
 
 (declare-native
   :name "jurl/native"
-  :cflags  [;default-cflags ;curl-cflags]
-  :ldflags [;default-lflags ;curl-ldflags]
+  :cflags  [;default-cflags  ;curl-cflags]
+  :ldflags [;default-ldflags ;curl-ldflags]
   :headers ["src/jurl.h"]
   :source  ["src/main.c"
             "src/jurl.c"
