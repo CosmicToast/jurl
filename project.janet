@@ -20,6 +20,15 @@
        :err    (:read (p :err) :all)})
     ([e] {:status false
           :error  e})))
+(defn- compiles?
+  [& flags]
+  (let [[inr inw] (os/pipe)
+        [_   out] (os/pipe)
+        [_   err] (os/pipe)
+        _ (:write inw "int main(){}")]
+    (zero? (os/execute ["cc" "-" "-xc" "-o/dev/null" ;flags]
+                      :p
+                      {:err err :in inr :out out}))))
 (def pkgconf (let [bin? |(if ((execute $) :status) $ false)
                    bin  (or (bin? "pkgconf") (bin? "pkg-config"))]
                (fn pkgconf
@@ -38,11 +47,13 @@
         ldflags (partial pkgconf ["-lcurl"] "libcurl" "--libs")
         curl-c  (cflags)
         curl-l  (ldflags)
-        scurl-c (cflags "--static")
-        scurl-l (cflags "--static")]
-    # TODO: test scurl-c and scurl-l to pass those if applicable
-    {:cflags  curl-c
-     :ldflags curl-l}))
+        scurl-c (cflags  "--static")
+        scurl-l (ldflags "--static")]
+    (if (compiles? ;scurl-c ;scurl-l)
+      {:cflags  scurl-c
+       :ldflags scurl-l}
+      {:cflags  curl-c
+       :ldflags curl-l})))
 
 (declare-native
   :name "jurl/native"
