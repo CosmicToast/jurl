@@ -24,9 +24,10 @@
   [& flags]
   (let [[inr inw] (os/pipe)
         [_   out] (os/pipe)
-        [_   err] (os/pipe)
-        _ (:write inw "int main(){}")]
-    (zero? (os/execute ["cc" "-" "-xc" "-o/dev/null" ;flags]
+        [_   err] (os/pipe)]
+    (:write inw "int main(){}")
+    (:close inw)
+    (zero? (os/execute ["cc" "-xc" "-" "-o/dev/null" ;flags]
                       :p
                       {:err err :in inr :out out}))))
 (def pkgconf (let [bin? |(if ((execute $) :status) $ false)
