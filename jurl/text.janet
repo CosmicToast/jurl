@@ -103,3 +103,22 @@
                           (format-header k v))))
        flatten
        freeze))
+
+(def- day-name
+  # unfortunately, 0 = Sun under os/date
+  ["Sun" "Mon" "Tue" "Wed" "Thu" "Fri" "Sat"])
+(def- month-name
+  ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
+
+(defn format-date
+  ``Formats a date for use in Date: headers.
+  ``
+  []
+  (let [d  (os/date)
+        dn (day-name   (d :week-day))
+        mn (month-name (d :month))
+        md (inc (d :month-day))]
+    # day-name day month-name year H:M:S
+    (string/format "%s, %02d %s %04d %02d:%02d:%02d GMT"
+                   dn md mn (d :year)
+                   (d :hours) (d :minutes) (d :seconds))))
