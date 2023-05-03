@@ -242,7 +242,7 @@
                (do
                  (set remethod false)
                  (pt :mimepost (mime/new handle ;indx)))
-    
+
                (error "body must either be a mime to do a multipart form submission, a buffer/string, callback function, a list of mime parts, or dictionary to url-encode")))
 
   (when cookies
@@ -278,17 +278,17 @@
      :connect (pt :customrequest "CONNECT")
      :trace   (pt :customrequest "TRACE")
      (error "method must be one of :get :post :put :head :delete :patch :options :connect :trace")))
-  
+
   (def res-body @"")
   (def res-hdr  @"")
   (pt :headerfunction |(buffer/push res-hdr  $))
   (pt :writefunction (if (function? stream)
                        stream
                        |(buffer/push res-body $)))
-  
+
   (when options (eachp [k v] options
                   (pt k v)))
-  
+
   (def curlcode (:perform handle))
 
   # TODO: cookie list to map, merge given cookies if any
@@ -297,7 +297,7 @@
    :error   curlcode
    :handle  handle
    :headers (text/parse-headers res-hdr)
-   :status  (handle :response-code)}) 
+   :status  (handle :response-code)})
 
 (defn- merge-request
   [orig new]
