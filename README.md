@@ -2,15 +2,17 @@
 Janet Curl (secretly Jean Curl)
 
 A libcurl easy API wrapper for Janet.
-It's divided into two components: `jurl/native`, which holds the low level C interfacing, and the high level `jurl` janet wrapper.
+It contains the following (public) components:
+* `jurl/native`: a low level C interface to curl's `easy` suite.
+* `jurl`: an HTTP client based on `jurl/native`, including quick and dirty `slurp` and `spit` functions, an API builder, and a `request` function.
+* `jurl/smtp`: an SMTP client based on `jurl/native`.
 
-The library is mostly finished.
-There are a few minor features missing (e.g ioctl overrides).
-There's also a few niceties to think about (for example, custom cookie parsing and mapping).
-However, for 90+% of use-cases, it should be more than sufficient,
-and is far more complete and convenient than most http clients I've worked with so far, including in other languages.
+The goals between the components vary.
+`jurl/native` seeks to be unopinionated and as complete as possible, minus the `multi` interface.
+The other components seek to be convenient native-feeling clients.
 
-For examples of the various APIs, see the tests!
+Outside of `jurl/native`, `(doc module)` for any given component were written to be complete and useful.
+Of additional use can be the examples.
 
 ## Installation
 `jpm install https://github.com/cosmictoast/jurl.git`
@@ -28,93 +30,114 @@ You can add it to your `project.janet` dependency list like so:
 This means you can also install it with `jpm install jurl`, and use
 `:repo "jurl"` in your dependencies list.
 
-This wraps around libcurl, and as such needs libcurl (library and headers for building) installed.
-Tested on linux and macos.
+Jurl is a `libcurl` wrapper, and as such needs libcurl (the library at runtime (unless linking statically), and also the headers at build time) installed.
+It is tested on the latest release of Fedora Linux and MacOS.
 
 ## Caveats
-Not all features are gated behind version flags, patches welcome.
-A few features are not implemented, grep for "not implemented" and "SKIP".
-I'm open to implementing what's left, but it's generally very niche things, such as ioctl callbacks.
+* Not all features are gated behind version flags.
+  * You are presumed to have at least curl 7.81.0.
+  * Features and flags that are deprecated in the latest release of curl tend to be removed from the bindings.
+* Some new features are not yet implemented or skipped. Grep for "SKIP" and "not implemented" to see details.
 
-The package is sensitive to curl versions.
-It should work with any version >7.81.0, and has been tested against 7.85.0, 7.86.0, and 8.0.1.
 If you run into issues with building, please see the CONTRIBUTING document - chances are I can help fix it.
 
 ## Jurl
-`jurl` is a requests-style API, but more complete.
+`jurl` is an HTTP client.
+The following is a quick high-level introduction.
+For additional details, see `(doc jurl)`, `(doc jurl/request)` and `jurl/init.janet`.
 
-You can use the `jurl/request` function directly (see its documentation for more details),
-`slurp` and `spit` for very basic http requests, or the pipeline high level API.
-
-Here are examples of `slurp` and `spit`:
+`slurp` and `spit` are easy to use functions to make basic http requests.
 ```janet
 (slurp "https://pie.dev/get")
-# => @"{\"args\": {} ..."
+# => @`{"args": {} ...}`
 
 (slurp "https://example.com/404")
 # => (error 404)
 
 (slurp "https://example.com/nxdomain")
-# => (error :error/...)
+# => (error :error/couldnt-resolve-host)
 
 (spit "https://pie.dev/post" "post body")
-# => @"{... \"data\": \"post body\" ...}"
+# => @`{... "data": "post body" ...}`
 
 (spit "https://pie.dev/post" `{"key": "value"}` :content-type :application/json)
-# => @"{ ... \"json\": {\"key\": \"value\"} ...}"
+# => @`{... "json": {"key": "value"} ...}`
 
 (spit "https://pie.dev/post" (slurp "https://pie.dev/get") :content-type :application/json)
 # => ...
 ```
 
-Here are a few basic examples of the pipeline API:
+`http`, `body`, `headers` and similar functions (all `jurl/` functions besides `request`, `slurp` and `spit`) are the pipeline API.
 ```janet
-# prepare and execute a GET to pie.dev/get
-((http :get "https://pie.dev/get"))
+# prepare a GET request to pie.dev/get
+(def myreq (http :get "https://pie.dev/get"))
+# execute the request
+(myreq)
 # => {:body "..." :cookies [] :error :ok :handle <jurl> :status 200}
-```
 
-```janet
-# prepare a POST to pie.dev/post
-(def post (http :post "https://pie.dev/post"))
-# add a body
-(def post-body (body "my body" post))
-# set content-type to text/plain
-(def post-body-ct (headers {:content-type "text/plain"} post-body))
-# launch the request
-(post-body-ct)
+# the request can be executed again
+(myreq)
 # => {:body "..." :cookies [] :error :ok :handle <jurl> :status 200}
+
+# it can also be extended further
+(def newreq (headers {:my-header :my-value} myreq)
+(newreq)
+# => ...
+
+# the name pipeline API comes from idiomatic usage
+# this is equivalent to "newreq"
+(def newreq2 (->> "https://pie.dev/get"
+                  (http :get)
+                  (headers {:my-header :my-value})))
 ```
 
+Finally, there is the `request` function.
+It's not strictly intended to be used directly, but rather serves as the backbone to the above.
+However, using it directly is valid.
 ```janet
-# equivalent to the previous example
-((->> "https://pie.dev/post"
-      (http :post)
-      (body "my body")
-      (headers {:content-type "text/plain"})))
+(request {:url "https://pie.dev/get" :headers {:my-header :my-value}})
+# => {:body @`{...}` ...}
 ```
 
+For implementation details, feel free to read through `jurl/init.janet`.
+
+## Jurl/SMTP
+`jurl/smtp` is an SMTP client.
+The following is a quick high-level introduction.
+For additional details, see `(doc jurl/smtp)`, `(doc smtp/new)` and `jurl/smtp.janet`.
+
+To send emails, you must be authenticated.
+As such, the first step is to instantiate a client.
+You do this with `smtp/new`.
 ```janet
-# example of preparing and modifying a request
-(def req (->> "https://pie.dev/post"
-              (http :post)
-              (body "my body")
-              (headers {:content-type :application/octet-stream})))
-# oops I want it to be application/json
-(def req2 (->> req
-               (headers {:content-type :application/json
-                         :custom-header "custom-value"})))
-# you can still use the old prepared request
-(req) # => {:body ...}
-# actually, in the end, I want text/plain
-# note that custom-header is still set
-(req2 {:headers {:content-type :text/plain}})
-# => {:body ...}
+(def myclient (smtp/new "smtps://smtp.provider.com"
+                        "John Doe <jdoe@provider.com>"
+                        "my application password"))
 ```
+The arguments are, in order:
+1. The `smtp` or `smtps` URL for the SMTP server that will be delivering your emails on your behalf.
+2. Your default identity, as you would specify it in the `from` header.
+  * Your full identity line, like `Name Family_Name <email@address>`.
+  * Your email address on its own.
+3. Your password. `jurl/smtp` does not support oauth2 client flows, and as such you will need to generate application passwords to use it with oauth2-enabled providers.
+   This is fairly common, however, and should not cause any problems.
+4. The keyword parameters:
+   * options: additional options to pass to the `jurl/native` handle at the time of creation.
+   * username: if your login username is *not* your email address from 2, you must specify this to log in.
 
-For more details, have a read through `jurl/init.janet`.
-I promise it's not very complex.
-For instance, you'll see how to extend the pipeline yourself with custom functions (`defapi`).
+Once you have your client created, you can call it like a function to send emails.
+The function signature is `(send headers &opt body &named files options)`.
+Of note is that body can be a string if it's of type text/plain, else it should be a dictionary from mimetype to contents.
+Details on files and what can go into body values can be found in `(doc jurl/mime)`.
+For exact details on what to put into those, see `(doc jurl/smtp)`, but here is a short but complete example.
+```janet
+(myclient {:to "Some Body <once@told.me>"
+           :cc ["First CC <reci@pie.nt>" "second@recipie.nt"]
+           :subject "Test Email"}
+          {:text/plain "plaintext version of the email body"
+           :text/html "<p>html version of the email body</p>"}
+          :files ["local.file" {:filename "remote.txt" :data "contents of file"}])
+```
 
 ## Jurl/Native
 `jurl/native` attempts to implement as much of libcurl's easy API in as direct a manner as possible.
@@ -129,7 +152,7 @@ Ones that are extremely common are not prefixed, such as various `:auth/` keys.
 Bitmaps are translated back and forth using indexables (arrays and tuples).
 For example, `CURLAUTH_BASIC | CURLAUTH_DIGEST` becomes `[basic digest]`.
 
-Here's an example of a basic POST request using `jurl/native`.
+Here's an example of a basic HTTP POST request using `jurl/native`.
 ```janet
 (import jurl/native)
 (def output-body @"")
