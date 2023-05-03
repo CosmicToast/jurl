@@ -117,8 +117,8 @@ You do this with `smtp/new`.
 The arguments are, in order:
 1. The `smtp` or `smtps` URL for the SMTP server that will be delivering your emails on your behalf.
 2. Your default identity, as you would specify it in the `from` header.
-  * Your full identity line, like `Name Family_Name <email@address>`.
-  * Your email address on its own.
+   * Your full identity line, like `Name Family_Name <email@address>`.
+   * Your email address on its own.
 3. Your password. `jurl/smtp` does not support oauth2 client flows, and as such you will need to generate application passwords to use it with oauth2-enabled providers.
    This is fairly common, however, and should not cause any problems.
 4. The keyword parameters:
