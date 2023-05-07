@@ -69,5 +69,6 @@
             "src/errors.c"
             "src/getinfo.c"
             "src/mime.c"
+            "src/polyfill.c"
             "src/setopt.c"
             "src/util.c"])

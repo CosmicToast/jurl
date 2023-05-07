@@ -14,14 +14,6 @@ int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n) {
 	return 1;
 }
 
-const char *janet_getcbytes(const Janet *argv, int32_t n) {
-	JanetByteView b = janet_getbytes(argv, n);
-	if (strlen((const char*) b.bytes) != (size_t) b.len) {
-		janet_panic("bytes contain embedded 0s");
-	}
-	return (const char*)b.bytes;
-}
-
 JANET_CFUN(jurl_escape) {
 	janet_fixarity(argc, 1);
 	JanetByteView b = janet_getbytes(argv, 0);

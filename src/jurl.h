@@ -2,6 +2,16 @@
 #include <curl/curl.h>
 #include <janet.h>
 
+// = polyfills
+#if JANET_VERSION_MAJOR < 2 && JANET_VERSION_MINOR < 28
+#define POLYFILL_CBYTES
+#endif
+
+#ifdef POLYFILL_CBYTES
+const char *janet_getcbytes(const Janet *argv, int32_t n);
+const char *janet_optcbytes(const Janet *argv, int32_t argc, int32_t n, const char *dflt);
+#endif
+
 // = structures
 
 // cleanup.c
@@ -90,7 +100,6 @@ JANET_CFUN(jurl_setopt);
 
 // util.c
 int janet_getslist(struct curl_slist **slist, Janet *argv, int32_t n);
-const char *janet_getcbytes(const Janet *argv, int32_t n);
 JANET_CFUN(jurl_escape);
 JANET_CFUN(jurl_unescape);
 JANET_CFUN(jurl_wrap_error);
