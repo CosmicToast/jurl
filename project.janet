@@ -35,12 +35,13 @@
                (fn pkgconf
                  [defval & args]
                  (if bin
-                   (->> (-> bin
-                            (execute ;args)
-                            (get :out)
-                            string/trim)
-                        (string/split " ")
-                        (filter |(< 0 (length $))))
+                   (or (-?>> (-?> bin
+                                 (execute ;args)
+                                 (get :out)
+                                 string/trim)
+                            (string/split " ")
+                            (filter |(< 0 (length $))))
+                       defval)
                    defval))))
 (def {:cflags  curl-cflags
       :ldflags curl-ldflags}
