@@ -20,7 +20,7 @@
     [:bytes b] (:data handle b)
 
     # to differentiate against bytes, pass tuple starting with :file
-    [:file fname] (:filedata handle fname)
+    [:file fname] (:filedata handle (freeze fname))
 
     # to differentiate against bytes, pass tuple starting with :mime
     [:mime amime] (:subparts handle amime)
@@ -34,9 +34,9 @@
 
     (error "mime data may only be bytes, jurl-mime, [:bytes bytes], [:file filename], [:mime jurl-mime], or [size callback]"))
 
-  (when name     (:name     handle name))
-  (when filename (:filename handle filename))
-  (when mimetype (:type     handle mimetype))
+  (when name     (:name     handle (freeze name)))
+  (when filename (:filename handle (freeze filename)))
+  (when mimetype (:type     handle (freeze mimetype)))
   (when encoder  (:encoder  handle encoder))
   (when headers  (:headers  handle
                             (->> headers

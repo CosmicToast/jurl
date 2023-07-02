@@ -4,12 +4,21 @@
 
 // = polyfills
 #if JANET_VERSION_MAJOR < 2 && JANET_VERSION_MINOR < 28
-#define POLYFILL_CBYTES
+#define POLYFILL_GETCBYTES
+#define POLYFILL_OPTCBYTES
+#elif JANET_VERSION_MAJOR < 2 && JANET_VERSION_MINOR < 30 && JANET_VERSION_PATCH < 2
+// TODO: consider making this unconditional, see polyfill.c for details
+#define POLYFILL_GETCBYTES
 #endif
 
-#ifdef POLYFILL_CBYTES
-const char *janet_getcbytes(const Janet *argv, int32_t n);
-const char *janet_optcbytes(const Janet *argv, int32_t argc, int32_t n, const char *dflt);
+#ifdef POLYFILL_GETCBYTES
+const char *poly_getcbytes(const Janet *argv, int32_t n);
+#define janet_getcbytes poly_getcbytes
+#endif
+
+#ifdef POLYFILL_OPTCBYTES
+const char *poly_optcbytes(const Janet *argv, int32_t argc, int32_t n, const char *dflt);
+#define janet_optcbytes poly_optcbytes
 #endif
 
 // = structures

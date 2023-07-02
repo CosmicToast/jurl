@@ -197,7 +197,7 @@
                     (eachp [k v] *default-options*
                       (put h k v))
                     h)))
-  (def pt (partial put handle))
+  (def pt (comp freeze (partial put handle)))
 
   (var url url)
   (when parts (each part parts
@@ -471,7 +471,7 @@
   or a non-2xx HTTP response code.
 
   Can also take the following named parameters:
-  * opts: Options to intelligently merge with the resulting query. 
+  * opts: Options to intelligently merge with the resulting query.
     To see what can go into opts, see the docs for `request`.
   ```
   [url &named opts]
@@ -490,7 +490,7 @@
 
   Can also take the following named parameters:
   * content-type: The content type to set. Defaults to `text/plain`.
-  * opts: Options to intelligently merge with the resulting query. 
+  * opts: Options to intelligently merge with the resulting query.
     To see what can go into opts, see the docs for `request`.
   ```
   [url body &named content-type opts]
