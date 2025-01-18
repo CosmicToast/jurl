@@ -30,8 +30,12 @@
     (zero? (os/execute ["cc" "-xc" "-" "-o/dev/null" ;flags]
                       :p
                       {:err err :in inr :out out}))))
-(def pkgconf (let [bin? |(if ((execute $) :status) $ false)
-                   bin  (or (bin? "pkgconf") (bin? "pkg-config"))]
+(defn bin?
+  [x]
+  (case ((execute x) :status)
+    0 x
+    1 x))
+(def pkgconf (let [bin  (or (bin? "pkgconf") (bin? "pkg-config"))]
                (fn pkgconf
                  [defval & args]
                  (if bin
