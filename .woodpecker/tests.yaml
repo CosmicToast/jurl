@@ -1,0 +1,13 @@
+when:
+- event: pull_request
+- event: push
+  branch: main
+
+steps:
+  - name: build+test
+    image: leafgarland/janet-sdk
+    commands:
+    - apk add curl-dev
+    - jpm deps
+    - jpm build
+    - jpm test
