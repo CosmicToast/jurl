@@ -1,7 +1,7 @@
 (declare-project
   :name "jurl"
   :description "Janet cUrl"
-  :author "Chloe Kudryavtsev <toast@bunkerlabs.net>"
+  :author "Chloé VULQUIN <toast@bunkerlabs.net>"
   :license "Unlicense"
   :repo "https://github.com/CosmicToast/jurl.git"
   :dependencies ["spork"])
