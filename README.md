@@ -1,5 +1,6 @@
 # Jurl
 Janet Curl (secretly Jean Curl)
+[![status-badge](https://woodpecker.toast.cafe/api/badges/1/status.svg)](https://woodpecker.toast.cafe/repos/1)
 
 A libcurl easy API wrapper for Janet.
 It contains the following (public) components:
